@@ -8,8 +8,14 @@ const Step3Photos = ({ onSubmit, onPrevious, formData, setFormData }) => {
   const handleFileChange = (e) => {
     const files = e.target.files;
     if (files.length <= 4) {
-      setSelectedFiles(files);
-      setFormData({ ...formData, photos: files });
+      // Convert FileList to an array
+      const fileArray = Array.from(files);
+
+      // Set selected files in the state
+      setSelectedFiles(fileArray);
+
+      // Update formData with photos (converted to array)
+      setFormData({ ...formData, photos: fileArray });
     } else {
       alert('You can only upload up to 4 files');
     }
@@ -45,7 +51,7 @@ const Step3Photos = ({ onSubmit, onPrevious, formData, setFormData }) => {
         <div className="file-preview">
           {selectedFiles.length > 0 && (
             <ul>
-              {Array.from(selectedFiles).map((file, index) => (
+              {selectedFiles.map((file, index) => (
                 <li key={index}>
                   {file.name}
                   <Button
@@ -61,9 +67,6 @@ const Step3Photos = ({ onSubmit, onPrevious, formData, setFormData }) => {
           )}
         </div>
       </div>
-
-      {/* <Button variant="outlined" onClick={onPrevious}>Previous</Button>
-      <Button variant="contained" color="primary" onClick={onSubmit}>Submit Report</Button> */}
     </div>
   );
 };

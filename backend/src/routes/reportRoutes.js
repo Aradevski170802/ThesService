@@ -1,47 +1,47 @@
-// backend/src/routes/reportRoutes.js
-const router = require('express').Router();
-// const authMiddleware = require('../middleware/authMiddleware');  // Import auth middleware
-const Report = require('../models/Report');
-const multer = require('multer');
+const fs = require('fs');
 const path = require('path');
+const multer = require('multer');
+const express = require('express');
+const router = express.Router();
+const Report = require('../models/Report');
 
-// Set up Multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, './uploads/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
-});
+// Set up Multer for file uploads (use memory storage instead of disk storage)
+const storage = multer.memoryStorage();  // Store files in memory as buffers
 const upload = multer({ storage });
 
-
-// POST /api/reports - Create a new report (no authentication required for now)
+// POST route for report submission
 router.post('/', upload.array('photos', 5), async (req, res) => {
   try {
     console.log("Request Body: ", req.body);  // Log incoming data
     console.log("Uploaded Files: ", req.files);  // Log uploaded files
 
-    const { location, description, department, anonymous, emergency } = req.body;
+    const { title, description, category, location, department, anonymous, emergency } = req.body;
+
+    // Parse location from stringified JSON to an object (lat and lon)
+    let parsedLocation = null;
+    if (location) {
+      parsedLocation = JSON.parse(location);  // Parse location if stringified
+    }
 
     // Validate required fields
-    if (!location || !description || !department) {
+    if (!title || !description || !category || !department) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
     // Get uploaded photos (if any)
-    const photos = req.files ? req.files.map(file => file.path) : [];  // Allow empty array if no files uploaded
+    const photos = req.files ? req.files.map((file) => file.path) : [];  // Handle photos if any
 
-    // Create new report with user ID
+    // Create new report object
     const newReport = new Report({
-      location,        // location is already a simple string, no need to parse
+      title,
       description,
+      category,
+      location: parsedLocation,  // location can be null if not provided
       department,
-      photos,          // If no photos, this will be an empty array
+      photos,  // If no photos, this will be an empty array
       anonymous: anonymous || false,
       emergency: emergency || false,
-      createdBy: 'anonymous',  // Use default value for now since authentication is disabled
+      createdBy: 'anonymous',  // Default to 'anonymous' if no user authentication is available
     });
 
     await newReport.save();
@@ -51,6 +51,12 @@ router.post('/', upload.array('photos', 5), async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+
+
+
+
+module.exports = router;
 
 
 

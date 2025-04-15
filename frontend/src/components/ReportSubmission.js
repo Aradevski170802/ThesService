@@ -30,33 +30,56 @@ const ReportSubmission = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Initialize formData object if it's not already
-    const formData = new FormData();
-    
-    // Attach required fields
-    formData.append('title', formData.title);
-    formData.append('description', formData.description);
-    formData.append('category', formData.category);
-    formData.append('location', formData.location);
-    formData.append('anonymous', formData.anonymous || false);
-    formData.append('emergency', formData.emergency || false);
   
-    // Initialize formData.photos as an empty array if it's not set
-    if (!formData.photos) {
-      formData.photos = [];
-    }
+    // Ensure the location is correctly structured as an object (if required)
+    const location = {
+      lat: formData.lat, // Ensure formData.lat is populated with the correct value
+      lon: formData.lng  // Ensure formData.lng is populated with the correct value
+    };
+  
+    // Log location for debugging
+    console.log('Location:', location);
+  
+    // Create a new FormData object
+    const form = new FormData();
+  
+    // Append required fields from formData state
+    form.append('title', formData.title);
+    form.append('description', formData.description);
+    form.append('category', formData.category);
+    
+    // Send location as stringified object
+    if (formData.lat && formData.lng) {
+            const location = {
+              lat: formData.lat,
+              lon: formData.lng,
+             };
+             form.append('location', JSON.stringify(location));  // Send location as stringified object
+           }
+         
+      
+  
+    form.append('anonymous', formData.anonymous || false);
+    form.append('emergency', formData.emergency || false);
+    
+  
+    // Ensure photos is always an array (empty array if no photos)
+    const photos = formData.photos || [];  // Default to an empty array if no photos
   
     // Append photos only if they exist
-    if (formData.photos.length > 0) {
-      formData.append('photos', formData.photos);
-    }
+    photos.forEach((photo) => {
+      form.append('photos', photo);  // Append each photo as a separate file
+    });
+  
+    // Log the form data before submitting for debugging
+    console.log('Form Data before submitting:', formData);
   
     try {
       const response = await fetch('http://localhost:5000/api/reports', {
         method: 'POST',
-        body: formData,
+        body: form,
       });
+  
       const data = await response.json();
   
       if (response.ok) {
