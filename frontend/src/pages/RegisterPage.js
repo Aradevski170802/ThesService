@@ -1,8 +1,7 @@
-// frontend/src/pages/RegisterPage.js
 import React, { useState } from 'react';
-import { TextField, Button, Container, Typography, Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import '../styles/RegisterPage.css'; // Your custom CSS/SCSS file
 
 const RegisterPage = () => {
   const [name, setName] = useState('');
@@ -25,65 +24,55 @@ const RegisterPage = () => {
   };
 
   return (
-    <Container>
-      <Box sx={{ maxWidth: 400, margin: 'auto', paddingTop: '50px' }}>
-        <Typography variant="h5" component="h1" gutterBottom>Register</Typography>
+    <div className="container register-container">
+      <div className="form-wrapper">
+        <h1>Register</h1>
         <form onSubmit={handleSubmit}>
-          <TextField
-            label="Name"
-            fullWidth
+          <input
+            type="text"
+            placeholder="Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            margin="normal"
             required
           />
-          <TextField
-            label="Surname"
-            fullWidth
+          <input
+            type="text"
+            placeholder="Surname"
             value={surname}
             onChange={(e) => setSurname(e.target.value)}
-            margin="normal"
             required
           />
-          <TextField
-            label="Email"
+          <input
             type="email"
-            fullWidth
+            placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            margin="normal"
             required
           />
-          <TextField
-            label="Password"
+          <input
             type="password"
-            fullWidth
+            placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            margin="normal"
             required
           />
-          <TextField
-            label="Phone Number"
-            fullWidth
+          <input
+            type="text"
+            placeholder="Phone Number"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            margin="normal"
           />
-          <TextField
-            label="Country"
-            fullWidth
+          <input
+            type="text"
+            placeholder="Country"
             value={country}
             onChange={(e) => setCountry(e.target.value)}
-            margin="normal"
             required
           />
-          <Button variant="contained" color="primary" fullWidth type="submit" sx={{ marginTop: '20px' }}>
-            Register
-          </Button>
+          <button type="submit" className="btn">Register</button>
         </form>
-      </Box>
-    </Container>
+      </div>
+    </div>
   );
 };
 

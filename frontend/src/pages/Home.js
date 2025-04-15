@@ -1,36 +1,33 @@
-// frontend/src/pages/Home.js
 import React from 'react';
-import { Button, Typography, Container } from '@mui/material';
 import { Link } from 'react-router-dom';
+import '../styles/Home.css'; // Create and import your CSS/SCSS file
 
 const Home = () => {
   return (
-    <Container>
-      <header style={{ display: 'flex', justifyContent: 'space-between', padding: '20px 0' }}>
-        <Typography variant="h4" component="h1">Public Infrastructure Maintenance</Typography>
-        <div>
-          <Button variant="contained" color="primary" component={Link} to="/login" style={{ marginRight: '10px' }}>
-            Login
-          </Button>
-          <Button variant="outlined" color="primary" component={Link} to="/register">
-            Register
-          </Button>
+    <div className="container">
+      <header className="home-header">
+        <h1 className="home-title">Public Infrastructure Maintenance</h1>
+        <div className="home-buttons">
+          <Link to="/login">
+            <button className="btn primary-btn" style={{ marginRight: '10px' }}>Login</button>
+          </Link>
+          <Link to="/register">
+            <button className="btn outlined-btn">Register</button>
+          </Link>
         </div>
       </header>
 
-      <section style={{ textAlign: 'center', padding: '40px 0' }}>
-        <Typography variant="h5" component="h2" paragraph>
-          Welcome to the Public Infrastructure Maintenance System
-        </Typography>
-        <Typography variant="body1" paragraph>
+      <section className="home-section">
+        <h2 className="home-subtitle">Welcome to the Public Infrastructure Maintenance System</h2>
+        <p className="home-text">
           This platform allows you to report infrastructure issues like potholes, broken streetlights, and more.
           Your reports help us improve the city's services and maintain public safety.
-        </Typography>
-        <Button variant="contained" color="secondary" component={Link} to="/reports">
-          Report an Issue
-        </Button>
+        </p>
+        <Link to="/reports">
+          <button className="btn secondary-btn">Report an Issue</button>
+        </Link>
       </section>
-    </Container>
+    </div>
   );
 };
 

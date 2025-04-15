@@ -1,7 +1,6 @@
-// frontend/src/components/ReportList.js
 import React, { useEffect, useState } from 'react';
-import { List, ListItem, ListItemText, Divider, Button } from '@mui/material';
 import axios from 'axios';
+import '../styles/ReportList.css';
 
 const ReportList = () => {
   const [reports, setReports] = useState([]);
@@ -20,23 +19,16 @@ const ReportList = () => {
   }, []);
 
   return (
-    <div>
-      <List>
+    <div className="report-list">
+      <ul>
         {reports.map((report) => (
-          <div key={report._id}>
-            <ListItem>
-              <ListItemText
-                primary={`Location: ${report.location}`}
-                secondary={`Status: ${report.status}`}
-              />
-            </ListItem>
-            <Divider />
-          </div>
+          <li key={report._id} className="report-item">
+            <div><strong>Location:</strong> {report.location}</div>
+            <div><strong>Status:</strong> {report.status}</div>
+          </li>
         ))}
-      </List>
-      <Button variant="contained" color="primary" onClick={() => window.location.reload()}>
-        Refresh
-      </Button>
+      </ul>
+      <button onClick={() => window.location.reload()} className="btn">Refresh</button>
     </div>
   );
 };

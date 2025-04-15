@@ -1,0 +1,23 @@
+.report-list {
+    width: 100%;
+    padding: 20px;
+  }
+  
+  .report-item {
+    padding: 10px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+  }
+  
+  button {
+    background-color: #1976d2;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background-color: #1565c0;
+  }
+  

@@ -1,7 +1,6 @@
-// frontend/src/components/ReportForm.js
 import React, { useState } from 'react';
-import { TextField, Button, Container, Typography, Box } from '@mui/material';
 import axios from 'axios';
+import '../styles/ReportForm.css';
 
 const ReportForm = () => {
   const [formData, setFormData] = useState({
@@ -30,8 +29,7 @@ const ReportForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const token = localStorage.getItem('token'); // Get JWT token from localStorage
+    const token = localStorage.getItem('token');
     
     if (!token) {
       alert('You need to be logged in to submit a report');
@@ -52,7 +50,7 @@ const ReportForm = () => {
     try {
       await axios.post('http://localhost:5000/api/reports', formDataToSend, {
         headers: {
-          'Authorization': `Bearer ${token}`, // Send token with the request
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
         },
       });
@@ -63,45 +61,42 @@ const ReportForm = () => {
   };
 
   return (
-    <Container>
-      <Box sx={{ maxWidth: 600, margin: 'auto', paddingTop: '50px' }}>
-        <Typography variant="h5" component="h1" gutterBottom>Submit a Report</Typography>
-        <form onSubmit={handleSubmit}>
-          <TextField
-            label="Location"
-            name="location"
-            value={formData.location}
-            onChange={handleChange}
-            fullWidth
-            required
-            margin="normal"
-          />
-          <TextField
-            label="Description"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            multiline
-            rows={4}
-            fullWidth
-            required
-            margin="normal"
-          />
-          <TextField
-            label="Department"
-            name="department"
-            value={formData.department}
-            onChange={handleChange}
-            fullWidth
-            required
-            margin="normal"
-          />
-          <Button variant="contained" color="primary" fullWidth type="submit" sx={{ marginTop: '20px' }}>
-            Submit Report
-          </Button>
+    <div className="container report-form-container">
+      <div className="form-wrapper">
+        <h1>Submit a Report</h1>
+        <form onSubmit={handleSubmit} encType="multipart/form-data">
+          <div className="form-group">
+            <label>Location</label>
+            <input type="text" name="location" value={formData.location} onChange={handleChange} required />
+          </div>
+          <div className="form-group">
+            <label>Description</label>
+            <textarea name="description" value={formData.description} onChange={handleChange} rows="4" required></textarea>
+          </div>
+          <div className="form-group">
+            <label>Department</label>
+            <input type="text" name="department" value={formData.department} onChange={handleChange} required />
+          </div>
+          <div className="form-group">
+            <label>
+              <input type="checkbox" name="anonymous" checked={formData.anonymous} onChange={handleChange} />
+              Report Anonymously
+            </label>
+          </div>
+          <div className="form-group">
+            <label>
+              <input type="checkbox" name="emergency" checked={formData.emergency} onChange={handleChange} />
+              Mark as Emergency
+            </label>
+          </div>
+          <div className="form-group">
+            <label>Photos</label>
+            <input type="file" name="photos" onChange={handleFileChange} multiple />
+          </div>
+          <button type="submit" className="btn">Submit Report</button>
         </form>
-      </Box>
-    </Container>
+      </div>
+    </div>
   );
 };
 

@@ -1,21 +1,20 @@
-// frontend/src/components/Navbar.js
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { AppBar, Toolbar, Button, Typography } from '@mui/material';
+import '../styles/Navbar.css';
 
 const Navbar = () => {
   return (
-    <AppBar position="static">
-      <Toolbar>
-        <Typography variant="h6" sx={{ flexGrow: 1 }}>
-          Public Infrastructure Maintenance System
-        </Typography>
-        <Button color="inherit" component={Link} to="/reports">Reports</Button>
-        <Button color="inherit" component={Link} to="/submit-report">Submit Report</Button>
-        <Button color="inherit" component={Link} to="/login">Login</Button>
-        <Button color="inherit" component={Link} to="/register">Register</Button>
-      </Toolbar>
-    </AppBar>
+    <nav className="navbar">
+      <div className="navbar-title">
+        Public Infrastructure Maintenance System
+      </div>
+      <div className="navbar-links">
+        <Link to="/reports" className="nav-link">Reports</Link>
+        <Link to="/submit-report" className="nav-link">Submit Report</Link>
+        <Link to="/login" className="nav-link">Login</Link>
+        <Link to="/register" className="nav-link">Register</Link>
+      </div>
+    </nav>
   );
 };
 

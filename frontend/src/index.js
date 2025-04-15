@@ -1,9 +1,18 @@
-// frontend/src/index.js
 import React from 'react';
-import ReactDOM from 'react-dom/client';  // Updated import
+import ReactDOM from 'react-dom/client';
 import App from './App';
-import './index.css';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 
-// Create root element and render the App
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);
+const theme = createTheme({
+  palette: {
+    primary: { main: '#FF0B55' },
+    secondary: { main: '#dc004e' },
+    background: {main: '#27667b'}
+  },
+});
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <ThemeProvider theme={theme}>
+    <App />
+  </ThemeProvider>
+);
