@@ -6,6 +6,8 @@ const cors = require('cors');
 const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 
+
+
 // 1) Create an Express app
 const app = express();
 
@@ -13,6 +15,12 @@ const app = express();
 app.use(cors()); // Allow cross-origin requests
 app.use(express.json()); // Parse incoming JSON requests
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+
+app.use(cors({
+    origin: 'http://localhost:3000',  // Frontend URL
+    methods: ['GET', 'POST'],  // Allowed methods
+    credentials: true  // If you need to send cookies or authorization headers
+  }));
 
 // 3) Swagger setup (API documentation)
 const swaggerOptions = {
