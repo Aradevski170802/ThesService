@@ -1,81 +1,23 @@
-/* ReportList.css */
-.report-list-container {
-  display: flex;
-  justify-content: space-between;
-  padding: 20px;
-}
-
 .report-list {
-  width: 45%;  /* Left side: Report list */
-  padding: 10px;
-  overflow-y: scroll;
-  max-height: 80vh;
-}
-
-.report-card {
-  margin-bottom: 15px;
-  cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
-  transition: all 0.3s ease;
-}
-
-.report-card:hover {
-  transform: scale(1.02);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-}
-
-.report-card .MuiCardContent-root {
-  padding: 20px;
-}
-
-.report-card .MuiCardActions-root {
-  padding: 10px 20px;
-}
-
-.report-card .MuiButton-text {
-  font-weight: bold;
-}
-
-.map-container {
-  width: 50%;  /* Right side: Map */
-  height: 80vh;
-}
-
-.report-item {
-  padding: 10px;
-  border: 1px solid #ddd;
-  margin-bottom: 10px;
-  cursor: pointer;
-}
-
-.report-item:hover {
-  background-color: #f0f0f0;
-}
-
-.btn {
-  margin-top: 20px;
-  padding: 10px 20px;
-  background-color: #3f51b5;
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-
-.btn:hover {
-  background-color: #303f9f;
-}
-
-.MuiDialogTitle-root {
-  position: relative;
-}
-
-.MuiDialogActions-root {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.MuiButton-root {
-  background-color: #f44336;
-  color: white;
-}
+    width: 100%;
+    padding: 20px;
+  }
+  
+  .report-item {
+    padding: 10px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+  }
+  
+  button {
+    background-color: #1976d2;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background-color: #1565c0;
+  }
+  

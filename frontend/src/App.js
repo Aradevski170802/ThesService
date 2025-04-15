@@ -1,13 +1,13 @@
+// frontend/src/App.js
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Navbar from './components/Navbar';  // Import Navbar
+import ReportForm from './components/ReportForm';
 import ReportList from './components/ReportList';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import HomePage from './pages/Home';
+import HomePage from './pages/Home'
 import './App.css';  // Import CSS for styling
-import ReportDetails from './components/ReportDetails';  // Import ReportDetails
-import ReportSubmission from './components/ReportSubmission'; // Import the ReportSubmission component
 
 const App = () => {
   return (
@@ -15,8 +15,7 @@ const App = () => {
       <Navbar />  {/* Render the Navbar */}
       <Routes>
         <Route path="/reports" element={<ReportList />} />
-        <Route path="/report/:id" element={<ReportDetails />} />  {/* Route for ReportDetails */}
-        <Route path="/submit-report" element={<ReportSubmission />} />  {/* Updated route for Report Submission */}
+        <Route path="/submit-report" element={<ReportForm />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/" element={<HomePage />} />  {/* Default route */}

@@ -1,6 +1,6 @@
 // backend/src/routes/reportRoutes.js
 const router = require('express').Router();
-// const authMiddleware = require('../middleware/authMiddleware');  // Import auth middleware
+const authMiddleware = require('../middleware/authMiddleware');  // Import auth middleware
 const Report = require('../models/Report');
 const multer = require('multer');
 const path = require('path');
@@ -16,13 +16,9 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-
-// POST /api/reports - Create a new report (no authentication required for now)
-router.post('/', upload.array('photos', 5), async (req, res) => {
+// POST /api/reports - Create a new report (authenticated route)
+router.post('/', authMiddleware, upload.array('photos', 5), async (req, res) => {
   try {
-    console.log("Request Body: ", req.body);  // Log incoming data
-    console.log("Uploaded Files: ", req.files);  // Log uploaded files
-
     const { location, description, department, anonymous, emergency } = req.body;
 
     // Validate required fields
@@ -31,17 +27,17 @@ router.post('/', upload.array('photos', 5), async (req, res) => {
     }
 
     // Get uploaded photos (if any)
-    const photos = req.files ? req.files.map(file => file.path) : [];  // Allow empty array if no files uploaded
+    const photos = req.files ? req.files.map(file => file.path) : [];
 
     // Create new report with user ID
     const newReport = new Report({
-      location,        // location is already a simple string, no need to parse
+      location,
       description,
       department,
-      photos,          // If no photos, this will be an empty array
+      photos,
       anonymous: anonymous || false,
       emergency: emergency || false,
-      createdBy: 'anonymous',  // Use default value for now since authentication is disabled
+      createdBy: req.user._id  // Store the user's ID who created the report
     });
 
     await newReport.save();
@@ -51,8 +47,6 @@ router.post('/', upload.array('photos', 5), async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
-
-
 
 // GET /api/reports - Fetch all reports
 router.get('/', async (req, res) => {
