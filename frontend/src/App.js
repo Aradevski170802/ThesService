@@ -7,6 +7,7 @@ import ReportList from './components/ReportList';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import HomePage from './pages/Home'
+import './App.css';  // Import CSS for styling
 
 const App = () => {
   return (
