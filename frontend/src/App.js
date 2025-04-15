@@ -7,6 +7,7 @@ import ReportList from './components/ReportList';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import HomePage from './pages/Home'
+import './App.css';  // Import CSS for styling
 
 const App = () => {
   return (
@@ -17,7 +18,7 @@ const App = () => {
         <Route path="/submit-report" element={<ReportForm />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/" element={<HomePage />} />  {/* Default route */}
+        <Route path="/HomePage" element={<HomePage/>} />  {/* Default route */}
       </Routes>
     </Router>
   );

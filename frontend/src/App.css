@@ -1,3 +1,12 @@
+/* Define your color palette as CSS variables */
+:root {
+  --primary-color: #143D60;    /* Dark blue */
+  --secondary-color: #27667B;  /* Lighter complementary blue */
+  --accent-color: #F5F5F5;      /* Light accent for text */
+  --text-color: #F5F5F5;        /* Light text for dark background */
+}
+
+/* Basic App styles */
 .App {
   text-align: center;
 }
@@ -13,19 +22,20 @@
   }
 }
 
+/* Updated header: using the same gradient for consistency */
 .App-header {
-  background-color: #282c34;
+  background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
-  color: white;
+  color: var(--accent-color);
 }
 
 .App-link {
-  color: #61dafb;
+  color: var(--secondary-color);
 }
 
 @keyframes App-logo-spin {
@@ -35,4 +45,18 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Body with a dark-themed gradient background */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+  color: var(--text-color);
+}
+
+/* Remove default link underlines */
+a {
+  text-decoration: none;
 }

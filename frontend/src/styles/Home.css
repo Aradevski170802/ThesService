@@ -1,34 +1,188 @@
-/* Example: Home.css */
-.container {
-    width: 90%;
-    margin: 0 auto;
-  }
+/***************************************************************
+ * Global Reset & Base Styles
+ ***************************************************************/
+ * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  overflow-x: hidden;  /* Prevent horizontal scrolling */
+}
+
+/***************************************************************
+ * Global Variables & Base Styles
+ ***************************************************************/
+:root {
+  --primary-color: #143D60;    /* Dark blue */
+  --secondary-color: #27667B;  /* Complementary blue */
+  --accent-color: #F5F5F5;      /* Light accent background */
+  --text-color: #333333;
+  --white-color: #ffffff;
+  --border-radius: 6px;
+  --transition-speed: 0.3s;
   
-  .home-header {
-    display: flex;
-    justify-content: space-between;
-    padding: 20px 0;
-  }
-  
-  .btn {
-    padding: 10px 20px;
-    border: none;
-    cursor: pointer;
-  }
-  
-  .primary-btn {
-    background-color: #1976d2;
-    color: white;
-  }
-  
-  .outlined-btn {
-    background-color: transparent;
-    color: #1976d2;
-    border: 1px solid #1976d2;
-  }
-  
-  .secondary-btn {
-    background-color: #dc004e;
-    color: white;
-  }
-  
+  /* Additional variables for hero and typography */
+  --highlight-color: #143D60;  /* For some headings/buttons if needed */
+  --hero-bg-color: #1b1b1b;     /* Dark hero background */
+  --hero-text-color: #f5f5f5;   /* Light text for hero */
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: var(--accent-color);
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/***************************************************************
+ * Main Home Container
+ ***************************************************************/
+.home {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  flex: 1;
+}
+
+/***************************************************************
+ * HERO SECTION
+ ***************************************************************/
+.hero-section {
+  width: 100%;
+  padding: 2rem 1rem;
+  background: var(--hero-bg-color);
+  color: var(--hero-text-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+
+.hero-nav-logo {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--white-color);
+}
+
+.hero-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.hero-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  line-height: 1.3;
+}
+
+.highlighted-text {
+  color: var(--highlight-color);
+}
+
+.hero-subtitle {
+  font-size: 1.1rem;
+  max-width: 700px;
+  margin: 0.5rem auto 1.5rem auto;
+  line-height: 1.6;
+  color: #d5d5d5;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.cta-btn {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color var(--transition-speed), color var(--transition-speed);
+  background-color: var(--highlight-color); /* Default for Report an Issue */
+  color: var(--white-color);
+  border: none;
+}
+
+.cta-btn:hover {
+  opacity: 0.9;
+}
+
+/* Dark Blue Button for "Make the City Better" */
+.darkblue-btn {
+  background-color: var(--primary-color);
+}
+
+/* App Badges */
+.app-badges {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.store-badge {
+  width: 150px;
+  object-fit: contain;
+}
+
+/***************************************************************
+ * INFO SECTION
+ ***************************************************************/
+.info-section {
+  width: 100%;
+  max-width: 1000px;
+  margin: 2rem auto;
+  text-align: center;
+  padding: 1rem;
+}
+
+.info-title {
+  font-size: 1.75rem;
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.info-text {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-color);
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/***************************************************************
+ * FOOTER
+ ***************************************************************/
+.home-footer {
+  text-align: center;
+  padding: 1rem 0;
+  background: var(--hero-bg-color);
+  color: var(--white-color);
+  font-size: 0.9rem;
+  border-top: 1px solid #444;
+  margin-top: 272px;  /* Push footer to the bottom of the viewport */
+}
+
+
+.hero-image {
+  max-width: 400px; /* Adjust the size as needed */
+  width: 100%;
+  height: auto;
+  margin: 2rem auto 0 auto; /* Space above, center horizontally */
+  display: block; /* So margin: auto can center it */
+}
