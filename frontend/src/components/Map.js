@@ -1,4 +1,3 @@
-// Map.js
 import React from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet'; // Import Leaflet for customizing markers
@@ -24,8 +23,9 @@ const Map = ({ reports }) => {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       />
       {reports.map((report) => {
-        // Split location into lat and lng
-        const [lat, lng] = report.location.split(' ').map(parseFloat);
+        // Access lat and lng from location object
+        const lat = report.location?.lat;
+        const lng = report.location?.lon;
 
         // Only create marker if the lat/lng are valid
         if (isValidLatLng(lat, lng)) {
@@ -43,7 +43,7 @@ const Map = ({ reports }) => {
             >
               <Popup>
                 <div>
-                  <h3>{report.location}</h3>
+                  <h3>{report.location ? `${report.location.lat}, ${report.location.lon}` : 'Location not available'}</h3>
                   <p>{report.status}</p>
                 </div>
               </Popup>
