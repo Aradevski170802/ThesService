@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';  // Import AuthContext
 import axios from 'axios';
-import '../styles/LoginPage.css'; // Your custom CSS/SCSS file
+import '../styles/LoginPage.css';
 
 const LoginPage = () => {
+  const { login } = useContext(AuthContext);  // Get login function from context
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
@@ -12,8 +15,7 @@ const LoginPage = () => {
     e.preventDefault();
     try {
       const response = await axios.post('http://localhost:5000/api/auth/login', { email, password });
-      localStorage.setItem('token', response.data.token);
-      alert('Login successful!');
+      login(response.data);  // Call login method from context
       navigate('/reports');
     } catch (error) {
       alert('Invalid credentials');
