@@ -1,29 +1,16 @@
 import React, { useState } from 'react';
-import { TextField, MenuItem, FormControl, Select, InputLabel, Button, FormHelperText } from '@mui/material';
-
-const categories = [
-  'Traffic & Road Safety',
-  'Public Lighting',
-  'Waste Management',
-  'Water & Sewage',
-  'Parks & Green Spaces',
-  'Public Transport',
-  'Building & Structural Safety',
-  'Graffiti & Vandalism',
-  'Miscellaneous'
-];
+import { TextField, Button, FormControl, InputLabel, Select, MenuItem, FormHelperText } from '@mui/material';
 
 const Step1Form = ({ onNext, formData, setFormData }) => {
   const [error, setError] = useState('');
 
   const handleNext = (e) => {
     e.preventDefault();
-    // Check if any mandatory field is empty
     if (!formData.title || !formData.description || !formData.category) {
       setError('All fields are required');
     } else {
       setError('');
-      onNext(formData);  // Proceed to next step
+      onNext(formData);
     }
   };
 
@@ -64,18 +51,14 @@ const Step1Form = ({ onNext, formData, setFormData }) => {
           onChange={(e) => setFormData({ ...formData, category: e.target.value })}
           label="Category"
         >
-          {categories.map((category) => (
-            <MenuItem key={category} value={category}>
-              {category}
-            </MenuItem>
-          ))}
+          <MenuItem value="Public Lighting">Public Lighting</MenuItem>
+          <MenuItem value="Road Damage">Road Damage</MenuItem>
+          <MenuItem value="Garbage">Garbage</MenuItem>
         </Select>
         {error && !formData.category && <FormHelperText error>{error}</FormHelperText>}
       </FormControl>
 
-      {/* <Button variant="contained" color="primary" onClick={handleNext} style={{ marginTop: '20px' }}>
-        Next
-      </Button> */}
+      <Button variant="contained" color="primary" onClick={handleNext}>Next</Button>
     </div>
   );
 };

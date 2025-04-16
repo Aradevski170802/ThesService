@@ -17,31 +17,40 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 
-// POST /api/reports - Create a new report (no authentication required for now)
 router.post('/', upload.array('photos', 5), async (req, res) => {
   try {
-    console.log("Request Body: ", req.body);  // Log incoming data
-    console.log("Uploaded Files: ", req.files);  // Log uploaded files
+    console.log("Request Body: ", req.body);
+    console.log("Uploaded Files: ", req.files);
 
-    const { location, description, department, anonymous, emergency } = req.body;
+    const { title, description, category, location, anonymous, emergency } = req.body;
 
-    // Validate required fields
-    if (!location || !description || !department) {
+    // Validate required fields (removed department)
+    if (!title || !description || !category || !location) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    // Get uploaded photos (if any)
-    const photos = req.files ? req.files.map(file => file.path) : [];  // Allow empty array if no files uploaded
+    // Parse the location (expecting a JSON string)
+    const locationObj = JSON.parse(location);
+    // Check that both lat and lng are available
+    if (!locationObj.lat || !locationObj.lng) {
+      return res.status(400).json({ message: 'Invalid location data' });
+    }
 
-    // Create new report with user ID
+    const photos = req.files ? req.files.map(file => file.path) : [];
+
+    // Set createdBy to 'anonymous'
+    const createdBy = 'anonymous';
+
+    // Create the new report
     const newReport = new Report({
-      location,        // location is already a simple string, no need to parse
+      title,
       description,
-      department,
-      photos,          // If no photos, this will be an empty array
-      anonymous: anonymous || false,
-      emergency: emergency || false,
-      createdBy: 'anonymous',  // Use default value for now since authentication is disabled
+      category,
+      location: { lat: locationObj.lat, lon: locationObj.lng },
+      anonymous: anonymous === 'true',
+      emergency: emergency === 'true',
+      photos,
+      createdBy,
     });
 
     await newReport.save();
@@ -51,6 +60,9 @@ router.post('/', upload.array('photos', 5), async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+
+
 
 
 

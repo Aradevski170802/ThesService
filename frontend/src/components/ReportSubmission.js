@@ -3,18 +3,21 @@ import Step1Form from './Step1Form';
 import Step2Map from './Step2Map';
 import Step3Photos from './Step3Photos';
 import { LinearProgress, Button } from '@mui/material';
-import '../styles/ReportSubmission.css'; // Import your CSS file for styling
+import '../styles/ReportSubmission.css';
 
 const ReportSubmission = () => {
-  const [step, setStep] = useState(1);
+  // Update initial state to include location as an object
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     category: '',
-    lat: '',
-    lng: '',
-    photos: []
+    location: { lat: 51.505, lng: -0.09 },  // Default location (London)
+    photos: [],
+    anonymous: false,
+    emergency: false
   });
+
+  const [step, setStep] = useState(1);
 
   const handleNext = () => {
     if (step < 3) {
@@ -24,41 +27,36 @@ const ReportSubmission = () => {
 
   const handlePrevious = () => {
     if (step > 1) {
-      setStep(step - 1);  // Go back to the previous step
+      setStep(step - 1);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Initialize formData object if it's not already
-    const formData = new FormData();
-    
-    // Attach required fields
-    formData.append('title', formData.title);
-    formData.append('description', formData.description);
-    formData.append('category', formData.category);
-    formData.append('location', formData.location);
-    formData.append('anonymous', formData.anonymous || false);
-    formData.append('emergency', formData.emergency || false);
-  
-    // Initialize formData.photos as an empty array if it's not set
-    if (!formData.photos) {
-      formData.photos = [];
-    }
-  
-    // Append photos only if they exist
+
+    const formDataToSend = new FormData();
+    formDataToSend.append('title', formData.title);
+    formDataToSend.append('description', formData.description);
+    formDataToSend.append('category', formData.category);
+    // Pass location as a JSON string
+    formDataToSend.append('location', JSON.stringify(formData.location));
+    formDataToSend.append('anonymous', formData.anonymous);
+    formDataToSend.append('emergency', formData.emergency);
+
+    // Append photos if available
     if (formData.photos.length > 0) {
-      formData.append('photos', formData.photos);
+      Array.from(formData.photos).forEach((file) => {
+        formDataToSend.append('photos', file);
+      });
     }
-  
+
     try {
       const response = await fetch('http://localhost:5000/api/reports', {
         method: 'POST',
-        body: formData,
+        body: formDataToSend,
       });
       const data = await response.json();
-  
+
       if (response.ok) {
         alert('Report submitted successfully!');
       } else {
@@ -69,44 +67,30 @@ const ReportSubmission = () => {
       alert('Error submitting report');
     }
   };
-  
-  
-  
-
 
   return (
     <div className="form-container">
       <h1>Submit a Report</h1>
-
-      {/* Progress Bar */}
       <LinearProgress variant="determinate" value={(step / 3) * 100} />
 
-      {/* Step 1: Title, Description, Category */}
-      {step === 1 && <Step1Form onNext={handleNext} formData={formData} setFormData={setFormData} />}
-      
-      {/* Step 2: Map Location */}
-      {step === 2 && <Step2Map onNext={handleNext} onPrev={handlePrevious} formData={formData} setFormData={setFormData} />}
-      
-      {/* Step 3: Upload Photos */}
-      {step === 3 && <Step3Photos onSubmit={handleSubmit} onPrevious={handlePrevious} formData={formData} setFormData={setFormData} />}
+      {step === 1 && (
+        <Step1Form onNext={handleNext} formData={formData} setFormData={setFormData} />
+      )}
+      {step === 2 && (
+        <Step2Map onNext={handleNext} onPrev={handlePrevious} formData={formData} setFormData={setFormData} />
+      )}
+      {step === 3 && (
+        <Step3Photos onSubmit={handleSubmit} onPrevious={handlePrevious} formData={formData} setFormData={setFormData} />
+      )}
 
-      {/* Conditional Buttons */}
       <div className="button-group">
         {step > 1 && (
-          <Button variant="outlined" onClick={handlePrevious}>
-            Previous
-          </Button>
+          <Button variant="outlined" onClick={handlePrevious}>Previous</Button>
         )}
-
-        {/* Only show Next or Submit Report button, depending on the step */}
         {step < 3 ? (
-          <Button variant="contained" color="primary" onClick={handleNext}>
-            Next
-          </Button>
+          <Button variant="contained" color="primary" onClick={handleNext}>Next</Button>
         ) : (
-          <Button variant="contained" color="primary" onClick={handleSubmit}>
-            Submit Report
-          </Button>
+          <Button variant="contained" color="primary" onClick={handleSubmit}>Submit Report</Button>
         )}
       </div>
     </div>
