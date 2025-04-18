@@ -1,82 +1,90 @@
-// backend/src/routes/reportRoutes.js
-const router = require('express').Router();
-// const authMiddleware = require('../middleware/authMiddleware');  // Import auth middleware
-const Report = require('../models/Report');
-const multer = require('multer');
-const path = require('path');
+const router    = require('express').Router();
+const multer    = require('multer');
+const mongoose  = require('mongoose');
+const Report    = require('../models/Report');
 
-// Set up Multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, './uploads/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
-});
-const upload = multer({ storage });
+// 1) Use Multer memory storage to buffer uploads
+const storage = multer.memoryStorage();
+const upload  = multer({ storage });
+const NodeGeocoder = require('node-geocoder');
+const geocoder = NodeGeocoder({ provider: 'openstreetmap' });
 
-
+/**
+ * POST /api/reports
+ * - upload up to 5 photos into GridFS
+ * - store the resulting file IDs in Report.photos
+ */
 router.post('/', upload.array('photos', 5), async (req, res) => {
   try {
-    console.log("Request Body: ", req.body);
-    console.log("Uploaded Files: ", req.files);
-
     const { title, description, category, location, anonymous, emergency } = req.body;
-
-    // Validate required fields (removed department)
-    if (!title || !description || !category || !location) {
-      return res.status(400).json({ message: 'Missing required fields' });
+    // parse the JSON‐stringified coords
+    const loc = JSON.parse(location);
+    if (typeof loc.lat !== 'number' || typeof loc.lng !== 'number') {
+      return res.status(400).json({ message: 'Invalid location format' });
     }
 
-    // Parse the location (expecting a JSON string)
-    const locationObj = JSON.parse(location);
-    // Check that both lat and lng are available
-    if (!locationObj.lat || !locationObj.lng) {
-      return res.status(400).json({ message: 'Invalid location data' });
+    // 1) reverse‐geocode to get a human address
+    const geoRes = await geocoder.reverse({ lat: loc.lat, lon: loc.lng });
+    const humanAddress = geoRes[0]?.formattedAddress || geoRes[0]?.displayName || '';
+
+    // 2) upload photos into GridFS (your existing code)
+    const bucket   = req.app.locals.gfsBucket;
+    const photoIds = [];
+    for (const file of req.files) {
+      const stream = bucket.openUploadStream(file.originalname, {
+        contentType: file.mimetype
+      });
+      stream.end(file.buffer);
+      await new Promise((r, e) => {
+        stream.on('finish', r);
+        stream.on('error',  e);
+      });
+      photoIds.push(stream.id);
     }
 
-    const photos = req.files ? req.files.map(file => file.path) : [];
-
-    // Set createdBy to 'anonymous'
-    const createdBy = 'anonymous';
-
-    // Create the new report
-    const newReport = new Report({
+    // 3) save the report, including `address`
+    const report = new Report({
       title,
       description,
       category,
-      location: { lat: locationObj.lat, lon: locationObj.lng },
+      location: { lat: loc.lat, lon: loc.lng },
+      address: humanAddress,          // ← store it here
       anonymous: anonymous === 'true',
       emergency: emergency === 'true',
-      photos,
-      createdBy,
+      photos:    photoIds,
+      createdBy: 'anonymous'
     });
 
-    await newReport.save();
-    res.status(201).json({ message: 'Report created successfully', report: newReport });
+    await report.save();
+    res.status(201).json({ message: 'Report created', report });
   } catch (err) {
     console.error('Error in POST /reports:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
+/**
+ * GET /api/reports/photo/:id
+ * Stream back an image from GridFS by its file ObjectID
+ */
+router.get('/photo/:id', (req, res) => {
+  try {
+    const bucket = req.app.locals.gfsBucket;
+    const _id    = new mongoose.Types.ObjectId(req.params.id);
+    const downloadStream = bucket.openDownloadStream(_id);
 
+    downloadStream.on('error', () => res.sendStatus(404));
+    downloadStream.pipe(res);
+  } catch (err) {
+    console.error('Error streaming photo:', err);
+    res.status(500).json({ message: 'Could not retrieve image' });
+  }
+});
 
-
-
-
-// GET /api/reports - Fetch all reports
+// GET all reports
 router.get('/', async (req, res) => {
   try {
-    const { status, department, emergency } = req.query;
-    const filters = {};
-
-    if (status) filters.status = status;
-    if (department) filters.department = department;
-    if (emergency) filters.emergency = emergency === 'true';  // Convert string to boolean
-
-    const reports = await Report.find(filters);
+    const reports = await Report.find();
     res.json(reports);
   } catch (err) {
     console.error('Error in GET /reports:', err);
@@ -84,214 +92,47 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/reports/:id - Fetch a single report by ID
+// GET one report by ID
 router.get('/:id', async (req, res) => {
   try {
-    const report = await Report.findById(req.params.id);
-    if (!report) {
-      return res.status(404).json({ message: 'Report not found' });
-    }
-    res.json(report);
+    const rpt = await Report.findById(req.params.id);
+    if (!rpt) return res.status(404).json({ message: 'Not found' });
+    res.json(rpt);
   } catch (err) {
     console.error('Error in GET /reports/:id:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// PUT /api/reports/:id - Update the status of a report
+// Update status
 router.put('/:id', async (req, res) => {
   try {
     const { status } = req.body;
-
-    if (!['Pending', 'In Progress', 'Resolved'].includes(status)) {
-      return res.status(400).json({ message: 'Invalid status value' });
+    if (!['Pending','In Progress','Resolved'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
     }
-
-    const report = await Report.findById(req.params.id);
-    if (!report) {
-      return res.status(404).json({ message: 'Report not found' });
-    }
-
-    report.status = status;
-    report.updatedAt = Date.now();
-    await report.save();
-
-    res.json({ message: 'Report status updated', report });
+    const rpt = await Report.findById(req.params.id);
+    if (!rpt) return res.status(404).json({ message: 'Not found' });
+    rpt.status = status;
+    rpt.updatedAt = Date.now();
+    await rpt.save();
+    res.json({ message: 'Status updated', report: rpt });
   } catch (err) {
     console.error('Error in PUT /reports/:id:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// DELETE /api/reports/:id - Delete a report by ID
+// Delete
 router.delete('/:id', async (req, res) => {
   try {
-    const report = await Report.findByIdAndDelete(req.params.id);
-    if (!report) {
-      return res.status(404).json({ message: 'Report not found' });
-    }
-    res.json({ message: 'Report deleted successfully' });
+    const rpt = await Report.findByIdAndDelete(req.params.id);
+    if (!rpt) return res.status(404).json({ message: 'Not found' });
+    res.json({ message: 'Deleted' });
   } catch (err) {
     console.error('Error in DELETE /reports/:id:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
-
-module.exports = router;
-
-
-/**
- * @swagger
- * components:
- *   schemas:
- *     Report:
- *       type: object
- *       required:
- *         - location
- *         - description
- *         - department
- *       properties:
- *         _id:
- *           type: string
- *           description: Unique identifier of the report
- *         location:
- *           type: string
- *           description: Location of the issue
- *         description:
- *           type: string
- *           description: Description of the problem
- *         department:
- *           type: string
- *           description: Department handling the issue
- *         photos:
- *           type: array
- *           items:
- *             type: string
- *           description: Photos related to the report
- *         anonymous:
- *           type: boolean
- *           description: Flag to determine if the report is anonymous
- *         emergency:
- *           type: boolean
- *           description: Flag to determine if the report is an emergency
- *         status:
- *           type: string
- *           enum:
- *             - Pending
- *             - In Progress
- *             - Resolved
- *           description: The current status of the report
- *         createdAt:
- *           type: string
- *           format: date-time
- *           description: The date when the report was created
- *         updatedAt:
- *           type: string
- *           format: date-time
- *           description: The date when the report was last updated
- */
-
-/**
- * @swagger
- * tags:
- *   name: Reports
- *   description: Infrastructure report creation, status updates, and management
- */
-
-/**
- * @swagger
- * /api/reports:
- *   post:
- *     summary: Create a new infrastructure report
- *     tags: [Reports]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Report'  # Reference the schema here
- *     responses:
- *       201:
- *         description: Report created successfully
- *       400:
- *         description: Missing required fields
- *       500:
- *         description: Server error
- */
-
-/**
- * @swagger
- * /api/reports/{id}:
- *   get:
- *     summary: Get a single report by ID
- *     tags: [Reports]
- *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         description: The ID of the report to retrieve
- *     responses:
- *       200:
- *         description: The report details
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Report'  # Reference the schema here
- *       404:
- *         description: Report not found
- */
-
-/**
- * @swagger
- * /api/reports/{id}:
- *   put:
- *     summary: Update the status of a report
- *     tags: [Reports]
- *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         description: The ID of the report to update
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               status:
- *                 type: string
- *                 enum: [Pending, In Progress, Resolved]
- *     responses:
- *       200:
- *         description: Report status updated
- *       400:
- *         description: Invalid status or missing fields
- *       404:
- *         description: Report not found
- *       500:
- *         description: Server error
- */
-
-/**
- * @swagger
- * /api/reports/{id}:
- *   delete:
- *     summary: Delete a report by ID
- *     tags: [Reports]
- *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         description: The ID of the report to delete
- *     responses:
- *       200:
- *         description: Report deleted successfully
- *       404:
- *         description: Report not found
- *       500:
- *         description: Server error
- */
-
 
 module.exports = router;

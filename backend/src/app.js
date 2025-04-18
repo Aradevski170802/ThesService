@@ -5,16 +5,28 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const path = require('path');
+const fs = require('fs');
 
+const app = express();
 
+const uploadsDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+}
+
+app.use('/uploads', express.static(uploadsDir));
 
 // 1) Create an Express app
-const app = express();
+
 
 // 2) Middlewares
 app.use(cors()); // Allow cross-origin requests
 app.use(express.json()); // Parse incoming JSON requests
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+// Serve the uploads directory as a static folder
+
+
 
 app.use(cors({
     origin: 'http://localhost:3000',  // Frontend URL
@@ -44,16 +56,20 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs)); // Serve Swagger UI on /api-docs route
 
-// 4) Connect to MongoDB (using environment variables or default)
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/PUBLIC_THESS';  // Update DB name as per your preference
-mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
-mongoose.connection.on('error', (err) => {
-    console.error('MongoDB connection error:', err);
-});
-mongoose.connection.once('open', () => {
-    console.log('Connected to MongoDB successfully');
-});
+// 1) Connect to MongoDB
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/PUBLIC_THESS';
+mongoose.connect(MONGO_URI);  // no need for deprecated options
 
+// 2) Wire up GridFS bucket once the connection is open
+const conn = mongoose.connection;
+conn.on('error', err => console.error('MongoDB connection error:', err));
+conn.once('open', () => {
+  console.log('Connected to MongoDB successfully');
+  // this is where we capture the underlying native db instance
+  app.locals.gfsBucket = new mongoose.mongo.GridFSBucket(conn.db, {
+    bucketName: 'photos'
+  });
+});
 // 5) Import routes (authRoutes, reportRoutes, etc.)
 const authRoutes = require('./routes/authRoutes'); // For user registration/login
 const reportRoutes = require('./routes/reportRoutes'); // For handling reports (create, update status)

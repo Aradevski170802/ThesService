@@ -1,39 +1,118 @@
-import React, { useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+// frontend/src/components/Step2Map.js
+
+import React, { useState, useEffect } from 'react';
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  useMap,
+  useMapEvents
+} from 'react-leaflet';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-const Step2Map = ({ onNext, onPrev, formData, setFormData }) => {
-  // Use the location from formData (which now is an object)
-  const [location, setLocation] = useState(formData.location || { lat: 51.505, lng: -0.09 });
+// Your custom pin image
+import pinImage from '../assets/pin-removebg-preview.png';
 
-  // Custom hook for handling map clicks
-  function LocationMarker() {
-    useMapEvents({
-      click(e) {
-        const { lat, lng } = e.latlng;
-        // Update local state and parent formData with the new location
-        setLocation({ lat, lng });
-        setFormData({ ...formData, location: { lat, lng } });
-        console.log("Latitude: ", lat, "Longitude: ", lng);
-      },
-    });
-    return <Marker position={location}><Popup>Click to set location</Popup></Marker>;
-  }
+const customIcon = L.icon({
+  iconUrl: pinImage,
+  iconSize: [30, 30],
+  iconAnchor: [15, 30],
+  popupAnchor: [0, -30],
+});
+
+// Default center (Thessaloniki)
+const defaultLocation = { lat: 40.6401, lng: 22.9444 };
+
+/**
+ * Re-centers the map whenever `center` prop changes.
+ */
+function Recenter({ center }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center);
+  }, [center, map]);
+  return null;
+}
+
+/**
+ * Lets you click on the map to pick a new location.
+ */
+function LocationMarker({ location, setLocation }) {
+  useMapEvents({
+    click(e) {
+      const { lat, lng } = e.latlng;
+      setLocation({ lat, lng });
+    }
+  });
+
+  return (
+    <Marker position={[location.lat, location.lng]} icon={customIcon}>
+      <Popup>Click on the map to select a location</Popup>
+    </Marker>
+  );
+}
+
+const Step2Map = ({ formData, setFormData }) => {
+  // 1) State for the chosen location
+  const [location, setLocation] = useState(defaultLocation);
+
+  // 2) State for the human-readable address
+  const [address, setAddress] = useState('');
+
+  // 3) Whenever location changes, store it in formData
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, location }));
+  }, [location, setFormData]);
+
+  // 4) Whenever location changes, reverse-geocode to get an address
+  useEffect(() => {
+    const fetchAddress = async () => {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${location.lat}&lon=${location.lng}&format=json`,
+          { headers: { 'User-Agent': 'ThesService/1.0 youremail@example.com' } }
+        );
+        const data = await res.json();
+        setAddress(data.display_name || 'No address found');
+      } catch {
+        setAddress('Error fetching address');
+      }
+    };
+    fetchAddress();
+  }, [location]);
 
   return (
     <div>
       <h2>Step 2: Select Location</h2>
-      <MapContainer center={location} zoom={13} style={{ width: '100%', height: '400px' }}>
+
+      {/* Show the address */}
+      <div style={{ marginBottom: 10 }}>
+        <label style={{ display: 'block', fontWeight: 'bold', marginBottom: 4 }}>
+          Selected Address:
+        </label>
+        <input
+          type="text"
+          value={address}
+          readOnly
+          style={{ width: '100%', padding: 8 }}
+        />
+      </div>
+
+      {/* The map, with re-centering logic */}
+      <MapContainer
+        center={[defaultLocation.lat, defaultLocation.lng]}
+        zoom={13}
+        style={{ width: '100%', height: 400 }}
+      >
+        <Recenter center={[location.lat, location.lng]} />
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          attribution='&copy; OpenStreetMap contributors'
         />
-        <LocationMarker />
+        <LocationMarker location={location} setLocation={setLocation} />
       </MapContainer>
-      <div>
-        <button onClick={onPrev}>Previous</button>
-        <button onClick={() => onNext(formData)}>Next</button>
-      </div>
     </div>
   );
 };

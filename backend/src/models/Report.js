@@ -9,10 +9,13 @@ const reportSchema = new mongoose.Schema(
       },
       required: true,
     },
+    address:     { type: String },
     title: { type: String, required: true },
     description: { type: String, required: true },
     category: { type: String, required: true },
-    photos: [String],
+    photos: [{
+      type: mongoose.Schema.Types.ObjectId
+    }],
     anonymous: { type: Boolean, default: false },
     emergency: { type: Boolean, default: false },
     createdBy: { type: String, default: 'anonymous' }

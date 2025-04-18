@@ -15,8 +15,8 @@ const Step3Photos = ({ onSubmit, onPrevious, formData, setFormData }) => {
         onChange={handleFileChange}
       />
       <div>
-        <button onClick={onPrevious}>Previous</button>
-        <button onClick={onSubmit}>Submit Report</button>
+        {/* <button onClick={onPrevious}>Previous</button>
+        <button onClick={onSubmit}>Submit Report</button> */}
       </div>
     </div>
   );

@@ -1,7 +1,10 @@
+// frontend/src/components/Map.js
+
 import React from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet'; // Import Leaflet for customizing markers
-import 'leaflet/dist/leaflet.css'; // Import Leaflet CSS
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { Button } from '@mui/material';
 
 const containerStyle = {
   width: '100%',
@@ -9,49 +12,68 @@ const containerStyle = {
 };
 
 const center = {
-  lat: 40.6401, // Default center location (Thessaloniki)
+  lat: 40.6401,
   lng: 22.9444
 };
 
-const Map = ({ reports }) => {
-  const isValidLatLng = (lat, lng) => !isNaN(lat) && !isNaN(lng);  // Check if latitude and longitude are valid
+// Helper to grab only street number + street name
+const getSimpleAddress = (full) => {
+  if (!full) return '';
+  const parts = full.split(',').map(s => s.trim());
+  return parts.length > 1
+    ? `${parts[0]}, ${parts[1]}`
+    : parts[0];
+};
+
+const Map = ({ reports, onMarkerClick }) => {
+  const isValid = (lat, lng) =>
+    typeof lat === 'number' && typeof lng === 'number';
 
   return (
     <MapContainer center={center} zoom={12} style={containerStyle}>
       <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" // OpenStreetMap as tile layer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; OpenStreetMap contributors'
       />
-      {reports.map((report) => {
-        // Access lat and lng from location object
+
+      {reports.map(report => {
         const lat = report.location?.lat;
         const lng = report.location?.lon;
+        if (!isValid(lat, lng)) return null;
 
-        // Only create marker if the lat/lng are valid
-        if (isValidLatLng(lat, lng)) {
-          return (
-            <Marker
-              key={report._id}
-              position={{ lat, lng }}
-              icon={new L.Icon({
-                iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+        return (
+          <Marker
+            key={report._id}
+            position={{ lat, lng }}
+            icon={
+              new L.Icon({
+                iconUrl:
+                  'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
                 iconSize: [25, 41],
                 iconAnchor: [12, 41],
                 popupAnchor: [1, -34],
                 tooltipAnchor: [16, -28],
-              })}
-            >
-              <Popup>
-                <div>
-                  <h3>{report.location ? `${report.location.lat}, ${report.location.lon}` : 'Location not available'}</h3>
-                  <p>{report.status}</p>
-                </div>
-              </Popup>
-            </Marker>
-          );
-        }
-
-        return null;  // Don't render anything if lat/lng are invalid
+              })
+            }
+          >
+            <Popup>
+              <div style={{ textAlign: 'center' }}>
+                <h4 style={{ margin: '0 0 8px' }}>
+                  {report.address
+                    ? getSimpleAddress(report.address)
+                    : `Lat ${lat.toFixed(5)}, Lon ${lng.toFixed(5)}`}
+                </h4>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => onMarkerClick(report._id)}
+                >
+                  View Report
+                </Button>
+              </div>
+            </Popup>
+          </Marker>
+        );
       })}
     </MapContainer>
   );

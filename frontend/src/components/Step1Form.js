@@ -51,14 +51,20 @@ const Step1Form = ({ onNext, formData, setFormData }) => {
           onChange={(e) => setFormData({ ...formData, category: e.target.value })}
           label="Category"
         >
+          <MenuItem value="Traffic & Road Safety">Traffic & Road Safety</MenuItem>
           <MenuItem value="Public Lighting">Public Lighting</MenuItem>
-          <MenuItem value="Road Damage">Road Damage</MenuItem>
-          <MenuItem value="Garbage">Garbage</MenuItem>
+          <MenuItem value="Waste Management">Waste Management</MenuItem>
+          <MenuItem value="Water & Sewage">Water & Sewage</MenuItem>
+          <MenuItem value="Parks & Green Spaces">Parks & Green Spaces</MenuItem>
+          <MenuItem value="Public Transport">Public Transport</MenuItem>
+          <MenuItem value="Building & Structural Safety">Building & Structural Safety</MenuItem>
+          <MenuItem value="Graffiti & Vandalism">Graffiti & Vandalism</MenuItem>
+          <MenuItem value="Miscellaneous">Miscellaneous</MenuItem>
         </Select>
         {error && !formData.category && <FormHelperText error>{error}</FormHelperText>}
       </FormControl>
 
-      <Button variant="contained" color="primary" onClick={handleNext}>Next</Button>
+      {/* <Button variant="contained" color="primary" onClick={handleNext}>Next</Button> */}
     </div>
   );
 };
