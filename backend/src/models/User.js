@@ -1,5 +1,4 @@
-// backend/src/models/User.js
-const mongoose = require('mongoose');
+const mongoose = require('mongoose'); // <-- Ensure mongoose is imported
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -30,6 +29,14 @@ const userSchema = new mongoose.Schema({
     role: {
         type: String,
         default: 'user'
+    },
+    isVerified: {
+        type: Boolean,
+        default: false
+    },
+    verificationCode: {
+        type: String,
+        default: null
     }
 }, { timestamps: true });
 
