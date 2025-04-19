@@ -1,58 +1,43 @@
 import React, { useState, useContext } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import '../styles/Navbar.css';
 
 const Navbar = () => {
-  const { user, logout } = useContext(AuthContext);
-
-  // Controls the desktop dropdown for "My Profile"
+  const { user, logout }        = useContext(AuthContext);
   const [isDropdownOpen, setDropdownOpen] = useState(false);
-
-  // Controls the mobile full-screen overlay
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location                = useLocation();
 
-  // Toggle the desktop dropdown
   const toggleDropdown = (e) => {
     e.stopPropagation();
     setDropdownOpen(!isDropdownOpen);
   };
-
-  // Close the dropdown if clicking outside (desktop usage)
   const handleClickOutside = () => {
     if (isDropdownOpen) setDropdownOpen(false);
   };
-
-  // Toggle the mobile full-screen overlay
   const toggleMobileMenu = (e) => {
     e.stopPropagation();
     setMobileMenuOpen(!isMobileMenuOpen);
-    // Close any open desktop dropdown
     if (isDropdownOpen) setDropdownOpen(false);
   };
 
   return (
     <>
-      {/* ---- DESKTOP NAVBAR ---- */}
+      {/* Desktop Navbar */}
       <nav className="navbar desktop-navbar" onClick={handleClickOutside}>
         <div className="navbar-container">
-          {/* Title/Brand */}
           <div className="navbar-title">
             <Link to="/">Public Infrastructure Maintenance</Link>
           </div>
-          {/* Desktop Links */}
           <div className="navbar-links">
             <Link to="/" className="nav-link">Home</Link>
             <Link to="/reports" className="nav-link">Reports</Link>
             <Link to="/submit-report" className="nav-link">Submit Report</Link>
 
-            {/* Conditionally show user menu or login/register */}
             {user ? (
               <div className="dropdown">
-                <button
-                  className="nav-link dropdown-toggle"
-                  onClick={toggleDropdown}
-                >
+                <button className="nav-link dropdown-toggle" onClick={toggleDropdown}>
                   My Profile
                 </button>
                 {isDropdownOpen && (
@@ -73,31 +58,43 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* ---- MOBILE BOTTOM BUTTON ---- */}
+      {/* Mobile Menu Button */}
       <div className="mobile-nav-button" onClick={toggleMobileMenu}>
         Menu
       </div>
 
-      {/* ---- MOBILE FULL-SCREEN MENU OVERLAY ---- */}
+      {/* Mobile Full-screen Overlay */}
       {isMobileMenuOpen && (
         <div className="mobile-menu-overlay" onClick={() => setMobileMenuOpen(false)}>
           <ul className="mobile-menu-links" onClick={(e) => e.stopPropagation()}>
+            <li><Link to="/" onClick={() => setMobileMenuOpen(false)}>Home</Link></li>
+            <li><Link to="/reports" onClick={() => setMobileMenuOpen(false)}>Reports</Link></li>
+
+            {/* New entries to toggle list/map */}
             <li>
-              <Link to="/" onClick={() => setMobileMenuOpen(false)}>Home</Link>
+              <Link to="/reports?view=list" onClick={() => setMobileMenuOpen(false)}>
+                Show Reports
+              </Link>
             </li>
             <li>
-              <Link to="/reports" onClick={() => setMobileMenuOpen(false)}>Reports</Link>
+              <Link to="/reports?view=map" onClick={() => setMobileMenuOpen(false)}>
+                 Map
+              </Link>
             </li>
-            <li>
-              <Link to="/submit-report" onClick={() => setMobileMenuOpen(false)}>Submit Report</Link>
-            </li>
+
+            <li><Link to="/submit-report" onClick={() => setMobileMenuOpen(false)}>Submit Report</Link></li>
+
             {user ? (
               <>
                 <li>
-                  <Link to="/change-password" onClick={() => setMobileMenuOpen(false)}>Change Password</Link>
+                  <Link to="/change-password" onClick={() => setMobileMenuOpen(false)}>
+                    Change Password
+                  </Link>
                 </li>
                 <li>
-                  <Link to="/change-email" onClick={() => setMobileMenuOpen(false)}>Change Email</Link>
+                  <Link to="/change-email" onClick={() => setMobileMenuOpen(false)}>
+                    Change Email
+                  </Link>
                 </li>
                 <li>
                   <button onClick={() => { logout(); setMobileMenuOpen(false); }}>
