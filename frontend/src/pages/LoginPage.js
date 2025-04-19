@@ -1,24 +1,40 @@
-import React, { useState } from 'react';
+// frontend/src/pages/LoginPage.js
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';  // Import AuthContext
 import axios from 'axios';
+import { AuthContext } from '../context/AuthContext';
 import '../styles/LoginPage.css';
 
 const LoginPage = () => {
-  const { login } = useContext(AuthContext);  // Get login function from context
+  const { login } = useContext(AuthContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', { email, password });
-      login(response.data);  // Call login method from context
-      navigate('/reports');
-    } catch (error) {
-      alert('Invalid credentials');
+      // 1) call the API
+      const { data } = await axios.post(
+        'http://localhost:5000/api/auth/login',
+        { email, password }
+      );
+
+      // 2) destructure token + user info
+      const { token, user: userInfo } = data;
+
+      // 3) save into context / localStorage
+      login({ ...userInfo, token });
+
+      // 4) redirect based on role
+      if (userInfo.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/reports');
+      }
+    } catch (err) {
+      console.error('Login failed:', err.response?.data || err);
+      alert(err.response?.data?.message || 'Invalid credentials');
     }
   };
 
@@ -31,14 +47,15 @@ const LoginPage = () => {
             type="email"
             placeholder="Email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={e => setEmail(e.target.value)}
             required
           />
           <input
             type="password"
             placeholder="Password"
+            autoComplete="current-password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={e => setPassword(e.target.value)}
             required
           />
           <button type="submit" className="btn">Login</button>

@@ -1,5 +1,4 @@
-// backend/src/app.js
-require('dotenv').config(); // Load environment variables from .env file
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -7,82 +6,92 @@ const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const path = require('path');
 const fs = require('fs');
+const bcrypt = require('bcrypt');
+const User = require('./models/User');
 
 const app = express();
 
+// ensure uploads folder exists
 const uploadsDir = path.join(process.cwd(), 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir);
-}
-
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
 app.use('/uploads', express.static(uploadsDir));
 
-// 1) Create an Express app
-
-
-// 2) Middlewares
-app.use(cors()); // Allow cross-origin requests
-app.use(express.json()); // Parse incoming JSON requests
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
-// Serve the uploads directory as a static folder
-
-
-
+// Middlewares
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-    origin: 'http://localhost:3000',  // Frontend URL
-    methods: ['GET', 'POST'],  // Allowed methods
-    credentials: true  // If you need to send cookies or authorization headers
-  }));
+  origin: 'http://localhost:3000',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
 
-// 3) Swagger setup (API documentation)
+// Swagger (optional)
 const swaggerOptions = {
-    definition: {
-        openapi: '3.0.0',
-        info: {
-            title: 'Public Infrastructure Maintenance System API',
-            version: '1.0.0',
-            description: 'API documentation for the city infrastructure issue tracking system',
-        },
-        servers: [
-            {
-                url: 'http://localhost:5000',  // Development server URL
-                description: 'Development server',
-            },
-        ],
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Public Infrastructure Maintenance API',
+      version: '1.0.0',
+      description: 'City issue tracking system',
     },
-    apis: ['./src/routes/*.js'], // Path to the route files (for Swagger annotations)
+    servers: [{ url: 'http://localhost:5000' }],
+  },
+  apis: ['./src/routes/*.js'],
 };
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerJsDoc(swaggerOptions)));
 
-const swaggerDocs = swaggerJsDoc(swaggerOptions);
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs)); // Serve Swagger UI on /api-docs route
-
-// 1) Connect to MongoDB
+// Mongo + GridFS
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/PUBLIC_THESS';
-mongoose.connect(MONGO_URI);  // no need for deprecated options
-
-// 2) Wire up GridFS bucket once the connection is open
+mongoose.connect(MONGO_URI);
 const conn = mongoose.connection;
-conn.on('error', err => console.error('MongoDB connection error:', err));
-conn.once('open', () => {
-  console.log('Connected to MongoDB successfully');
-  // this is where we capture the underlying native db instance
-  app.locals.gfsBucket = new mongoose.mongo.GridFSBucket(conn.db, {
-    bucketName: 'photos'
-  });
-});
-// 5) Import routes (authRoutes, reportRoutes, etc.)
-const authRoutes = require('./routes/authRoutes'); // For user registration/login
-const reportRoutes = require('./routes/reportRoutes'); // For handling reports (create, update status)
-app.use('/api/auth', authRoutes);  // Mount auth routes at /api/auth
-app.use('/api/reports', reportRoutes); // Mount report routes at /api/reports
+conn.on('error', err => console.error('Mongo error:', err));
+conn.once('open', async () => {
+  console.log('Connected to MongoDB');
 
-// 6) Test route
-app.get('/', (req, res) => {
-    res.send('Public Infrastructure Maintenance System API');
+  // wire up GridFS bucket
+  app.locals.gfsBucket = new mongoose.mongo.GridFSBucket(conn.db, { bucketName: 'photos' });
+
+  // ─── BOOTSTRAP SINGLE ADMIN ─────────────────────────────────
+  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
+  const adminPass = process.env.ADMIN_PASS;
+  if (adminEmail && adminPass) {
+    try {
+      const existing = await User.findOne({ email: adminEmail });
+      if (!existing) {
+        const hash = await bcrypt.hash(adminPass, 10);
+        await User.create({
+          name: 'Admin',
+          surname: 'User',
+          email: adminEmail,
+          password: hash,
+          role: 'admin',
+          isVerified: true
+        });
+        console.log(`✅ Created admin ${adminEmail}`);
+      } else if (existing.role !== 'admin') {
+        existing.role = 'admin';
+        existing.isVerified = true;
+        await existing.save();
+        console.log(`🔄 Upgraded ${adminEmail} to admin`);
+      }
+    } catch (e) {
+      console.error('Error bootstrapping admin:', e);
+    }
+  }
 });
 
-// 7) Start the server
-const PORT = process.env.PORT || 5000;  // Port from environment variable or default to 5000
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+// Routes
+const authRoutes = require('./routes/authRoutes');
+const reportRoutes = require('./routes/reportRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+
+app.use('/api/auth', authRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/admin', adminRoutes);
+
+// root
+app.get('/', (_, res) => res.send('Public Infrastructure Maintenance API'));
+
+// start
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server on ${PORT}`));

@@ -1,69 +1,91 @@
+// backend/routes/authRoutes.js
+require('dotenv').config();
 const router = require('express').Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const nodemailer = require('nodemailer'); // For sending verification emails
+const nodemailer = require('nodemailer');
 
-// Generate a random 6-digit verification code
-const generateVerificationCode = () => {
-    return Math.floor(100000 + Math.random() * 900000); // Generates a 6-digit number
+// single‐admin override (trim & lowercase)
+const adminEmail = process.env.ADMIN_EMAIL
+    ? process.env.ADMIN_EMAIL.trim().toLowerCase()
+    : '';
+console.log('→ ADMIN_EMAIL from .env:', JSON.stringify(adminEmail));
+
+
+// mailer setup
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS.replace(/\s/g, ''),
+    },
+});
+const generateVerificationCode = () =>
+    Math.floor(100000 + Math.random() * 900000);
+const sendVerificationEmail = (email, code) => {
+    transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Verify your email',
+        html: `<p>Your code: <strong>${code}</strong></p>`
+    }, (err, info) => {
+        if (err) console.error('Mail error:', err);
+        else console.log('Verification email sent:', info.response);
+    });
 };
 
-// POST /register - Register a new user
+// POST /register
 router.post('/register', async (req, res) => {
-    console.log("Received Registration Data:", req.body); // Log the request body
     try {
         const { name, surname, email, password, confirmPassword, phone, country } = req.body;
-
-        // Basic validations
         if (!name || !surname || !email || !password || !confirmPassword) {
-            return res.status(400).json({ message: 'Missing required fields' });
+            return res.status(400).json({ message: 'Missing fields' });
         }
-
-        // Check for existing user with the same email
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.status(400).json({ message: 'Email is already in use' });
-        }
-
-        // Password confirmation check
         if (password !== confirmPassword) {
-            return res.status(400).json({ message: 'Passwords do not match' });
+            return res.status(400).json({ message: 'Passwords mismatch' });
+        }
+        if (await User.findOne({ email: email.toLowerCase() })) {
+            return res.status(400).json({ message: 'Email in use' });
         }
 
-        // Hash the password (bcrypt)
-        const hashedPassword = await bcrypt.hash(password, 10);
+        // Determine role & verification status
+        const isAdminUser = email.toLowerCase() === adminEmail;
+        const role = isAdminUser ? 'admin' : 'user';
+        const isVerified = isAdminUser;  // skip verify for admin
 
-        // Create and save the new user
-        const newUser = new User({
+        const hash = await bcrypt.hash(password, 10);
+        const newUser = await User.create({
             name,
             surname,
-            email,
-            password: hashedPassword,
+            email: email.toLowerCase(),
+            password: hash,
             phone,
             country,
-            isVerified: false, // Email not verified yet
+            role,
+            isVerified,
+            verificationCode: null  // will set below if needed
         });
-        await newUser.save();
 
-        // Generate a verification code (6-digit number)
-        const verificationCode = generateVerificationCode();
-
-        // Save the verification code to the user document
-        newUser.verificationCode = verificationCode;
-        await newUser.save();
-
-        // Send verification email with the code
-        sendVerificationEmail(newUser.email, verificationCode);
+        if (!isAdminUser) {
+            // only generate code & email if not admin
+            const code = generateVerificationCode();
+            newUser.verificationCode = code;
+            await newUser.save();
+            sendVerificationEmail(newUser.email, code);
+        }
 
         res.status(201).json({
-            message: 'User registered successfully. Please check your email for verification.',
+            message: isAdminUser
+                ? 'Admin account created.'
+                : 'Registered. Please check your email for verification.',
             user: {
                 _id: newUser._id,
                 name: newUser.name,
                 surname: newUser.surname,
                 email: newUser.email,
-            },
+                role     // include role here so front‑end knows about it immediately
+            }
         });
     } catch (err) {
         console.error('Error in POST /register:', err);
@@ -71,92 +93,54 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// Function to send verification email
-const sendVerificationEmail = (email, verificationCode) => {
-    const verificationLink = `http://localhost:5000/api/auth/verify/${verificationCode}`;
-
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-        },
-    });
-
-    const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: 'Please verify your email address',
-        html: `<p>Please use the following code to verify your email address:</p><p><strong>${verificationCode}</strong></p>`,
-    };
-
-    transporter.sendMail(mailOptions, (err, info) => {
-        if (err) {
-            console.error('Error sending email:', err); // Log the error details
-            return;
-        } else {
-            console.log('Verification email sent: ' + info.response); // Log the successful email sending info
-        }
-    });
-};
-
-// GET /verify/:code - Verify user email with the code
+// GET /verify/:code
 router.get('/verify/:code', async (req, res) => {
-    const { code } = req.params;
-
     try {
-        const user = await User.findOne({ verificationCode: code });
-
+        const user = await User.findOne({ verificationCode: req.params.code });
         if (!user) {
             return res.status(400).json({ message: 'Invalid or expired code' });
         }
-
-        user.isVerified = true;  // Set user as verified
-        user.verificationCode = null; // Clear the verification code
+        user.isVerified = true;
+        user.verificationCode = null;
         await user.save();
-
-        res.status(200).json({ message: 'Email verified successfully' });
+        res.json({ message: 'Email verified successfully' });
     } catch (err) {
         console.error('Error in GET /verify/:code:', err);
-        res.status(400).json({ message: 'Invalid or expired code' });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
-// POST /login - User login
+// POST /login
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-
-        // Check fields
         if (!email || !password) {
             return res.status(400).json({ message: 'Missing email or password' });
         }
 
-        // Find user by email
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email: email.toLowerCase() });
         if (!user) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
-
-        // Check if user is verified
         if (!user.isVerified) {
             return res.status(400).json({ message: 'Please verify your email first' });
         }
 
-        // Compare password with stored hash
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
+        const match = await bcrypt.compare(password, user.password);
+        if (!match) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
 
-        // Create JWT token
+        // Ensure role is passed through
+        const isAdminUser = user.email.toLowerCase() === adminEmail;
+        const role = isAdminUser ? 'admin' : user.role;
+
         const token = jwt.sign(
-            { userId: user._id, email: user.email },
+            { userId: user._id, email: user.email, role },
             process.env.JWT_SECRET,
             { expiresIn: '1d' }
         );
 
-        // Respond with user details + token
         res.json({
             message: 'Login successful',
             user: {
@@ -164,8 +148,9 @@ router.post('/login', async (req, res) => {
                 name: user.name,
                 surname: user.surname,
                 email: user.email,
+                role
             },
-            token,
+            token
         });
     } catch (err) {
         console.error('Error in POST /login:', err);
@@ -173,100 +158,79 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// POST /change-password - Change user's password
+// POST /change-password
 router.post('/change-password', async (req, res) => {
     try {
-        const { currentPassword, newPassword } = req.body;
-
-        // Get the user from the JWT token
-        const token = req.header('Authorization').replace('Bearer ', '');
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findOne({ _id: decoded.userId });
-
+        const auth = req.headers.authorization?.split(' ')[1];
+        if (!auth) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+        const decoded = jwt.verify(auth, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.userId);
         if (!user) {
             return res.status(400).json({ message: 'User not found' });
         }
 
-        // Compare current password with the stored password
-        const isMatch = await bcrypt.compare(currentPassword, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ message: 'Current password is incorrect' });
+        const { currentPassword, newPassword } = req.body;
+        if (!(await bcrypt.compare(currentPassword, user.password))) {
+            return res.status(400).json({ message: 'Wrong current password' });
         }
 
-        // Hash the new password and update the user
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-        user.password = hashedPassword;
+        user.password = await bcrypt.hash(newPassword, 10);
         await user.save();
-
-        res.status(200).json({ message: 'Password changed successfully' });
+        res.json({ message: 'Password changed successfully' });
     } catch (err) {
         console.error('Error in POST /change-password:', err);
         res.status(500).json({ message: 'Server error' });
     }
 });
 
-/// POST /change-email - Change the user's email address
+// POST /change-email
 router.post('/change-email', async (req, res) => {
     try {
-        const { newEmail } = req.body;
-
-        // Ensure the user is authenticated
-        const token = req.headers.authorization?.split(' ')[1];
-        if (!token) {
-            return res.status(403).json({ message: 'No token provided, access denied.' });
+        const auth = req.headers.authorization?.split(' ')[1];
+        if (!auth) {
+            return res.status(403).json({ message: 'Access denied' });
         }
-
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(auth, process.env.JWT_SECRET);
         const user = await User.findById(decoded.userId);
         if (!user) {
             return res.status(400).json({ message: 'User not found' });
         }
 
-        // Check if the new email is already in use
-        const existingUser = await User.findOne({ email: newEmail });
-        if (existingUser) {
-            return res.status(400).json({ message: 'Email is already in use' });
+        const { newEmail } = req.body;
+        if (await User.findOne({ email: newEmail.toLowerCase() })) {
+            return res.status(400).json({ message: 'Email already in use' });
         }
 
-        // Generate a new verification code for the new email
-        const verificationCode = generateVerificationCode();
-
-        // Update the user's email and save the verification code
-        user.email = newEmail;
-        user.verificationCode = verificationCode;
+        const code = generateVerificationCode();
+        user.email = newEmail.toLowerCase();
+        user.isVerified = false;
+        user.verificationCode = code;
         await user.save();
+        sendVerificationEmail(user.email, code);
 
-        // Send verification email with the new code
-        sendVerificationEmail(newEmail, verificationCode);
-
-        res.status(200).json({ message: 'Email address changed. Please verify your new email.' });
+        res.json({ message: 'Email changed. Please verify your new email.' });
     } catch (err) {
         console.error('Error in POST /change-email:', err);
         res.status(500).json({ message: 'Server error' });
     }
 });
 
-
-
-// GET /verify-new-email/:code - Verify the new email address with the code
+// GET /verify-new-email/:code
 router.get('/verify-new-email/:code', async (req, res) => {
-    const { code } = req.params;
-
     try {
-        const user = await User.findOne({ verificationCode: code });
-
+        const user = await User.findOne({ verificationCode: req.params.code });
         if (!user) {
             return res.status(400).json({ message: 'Invalid or expired code' });
         }
-
-        user.isVerified = true;  // Set user as verified
-        user.verificationCode = null; // Clear the verification code
+        user.isVerified = true;
+        user.verificationCode = null;
         await user.save();
-
-        res.status(200).json({ message: 'Email verified successfully' });
+        res.json({ message: 'New email verified successfully' });
     } catch (err) {
         console.error('Error in GET /verify-new-email/:code:', err);
-        res.status(400).json({ message: 'Invalid or expired code' });
+        res.status(500).json({ message: 'Server error' });
     }
 });
 
