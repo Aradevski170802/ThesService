@@ -87,7 +87,7 @@ const LoginPage = () => {
                 </Grid>
                 <Grid item>
                   <Link component={RouterLink} to="/register" variant="body2">
-                    {"Don't have an account? Register"}
+                    {"Don't have an account? "}
                   </Link>
                 </Grid>
               </Grid>
