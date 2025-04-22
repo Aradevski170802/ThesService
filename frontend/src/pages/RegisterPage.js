@@ -1,75 +1,169 @@
 import React, { useState } from 'react';
-import { TextField, Button, Container, Typography, Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import {
+  Avatar,
+  Button,
+  TextField,
+  Paper,
+  Box,
+  Grid,
+  Typography,
+  Container
+} from '@mui/material';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import axios from 'axios';
 
 const RegisterPage = () => {
-  const [name, setName] = useState('');
-  const [surname, setSurname] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [phone, setPhone] = useState('');
-  const [country, setCountry] = useState('');
-  const [emailError, setEmailError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
+  const [form, setForm] = useState({
+    name: '',
+    surname: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    phone: '',
+    country: ''
+  });
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const handleChange = e => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-  const handleSubmit = async (e) => {
+  const validate = () => {
+    const errs = {};
+    if (!form.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) errs.email = 'Invalid email';
+    if (form.password !== form.confirmPassword) errs.confirmPassword = 'Passwords must match';
+    return errs;
+  };
+
+  const handleSubmit = async e => {
     e.preventDefault();
-
-    if (!emailRegex.test(email)) {
-      setEmailError('Please enter a valid email.');
+    const errs = validate();
+    if (Object.keys(errs).length) {
+      setErrors(errs);
       return;
-    } else {
-      setEmailError('');
     }
-
-    if (password !== confirmPassword) {
-      setPasswordError('Passwords do not match.');
-      return;
-    } else {
-      setPasswordError('');
-    }
-
     try {
-      const userData = {
-        name,
-        surname,
-        email,
-        password,
-        confirmPassword,
-        phone,
-        country,
-      };
-
-      await axios.post('http://localhost:5000/api/auth/register', userData);
-      alert('Registration successful! Please check your email for verification.');
-      navigate('/verify'); // Navigate to the verification page
-    } catch (error) {
-      console.error("Error during registration:", error.response ? error.response.data : error);
-      alert('Error during registration');
+      await axios.post('http://localhost:5000/api/auth/register', form);
+      alert('Registration successful! Check your email for verification.');
+      navigate('/verify');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Registration error');
     }
   };
 
   return (
-    <Container>
-      <Box sx={{ maxWidth: 400, margin: 'auto', paddingTop: '50px' }}>
-        <Typography variant="h5" component="h1" gutterBottom>Register</Typography>
-        <form onSubmit={handleSubmit}>
-          <TextField label="Name" fullWidth value={name} onChange={(e) => setName(e.target.value)} margin="normal" required />
-          <TextField label="Surname" fullWidth value={surname} onChange={(e) => setSurname(e.target.value)} margin="normal" required />
-          <TextField label="Email" fullWidth value={email} onChange={(e) => setEmail(e.target.value)} margin="normal" required error={!!emailError} helperText={emailError} />
-          <TextField label="Password" type="password" fullWidth value={password} onChange={(e) => setPassword(e.target.value)} margin="normal" required />
-          <TextField label="Confirm Password" type="password" fullWidth value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} margin="normal" required error={!!passwordError} helperText={passwordError} />
-          <TextField label="Phone" fullWidth value={phone} onChange={(e) => setPhone(e.target.value)} margin="normal" />
-          <TextField label="Country" fullWidth value={country} onChange={(e) => setCountry(e.target.value)} margin="normal" required />
-          <Button variant="contained" color="primary" fullWidth type="submit" sx={{ marginTop: '20px' }}>Register</Button>
-        </form>
-      </Box>
-    </Container>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #FF758C 0%, #FF7EB3 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        p: 2
+      }}
+    >
+      <Container maxWidth="sm">
+        <Paper elevation={6} sx={{ p: 4, borderRadius: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
+              <PersonAddIcon />
+            </Avatar>
+            <Typography component="h1" variant="h5" gutterBottom>
+              Create Account
+            </Typography>
+            <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    name="name"
+                    label="First Name"
+                    fullWidth
+                    required
+                    value={form.name}
+                    onChange={handleChange}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    name="surname"
+                    label="Last Name"
+                    fullWidth
+                    required
+                    value={form.surname}
+                    onChange={handleChange}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    name="email"
+                    label="Email Address"
+                    fullWidth
+                    required
+                    value={form.email}
+                    onChange={handleChange}
+                    error={!!errors.email}
+                    helperText={errors.email}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    name="password"
+                    label="Password"
+                    type="password"
+                    fullWidth
+                    required
+                    value={form.password}
+                    onChange={handleChange}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    name="confirmPassword"
+                    label="Confirm Password"
+                    type="password"
+                    fullWidth
+                    required
+                    value={form.confirmPassword}
+                    onChange={handleChange}
+                    error={!!errors.confirmPassword}
+                    helperText={errors.confirmPassword}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    name="phone"
+                    label="Phone"
+                    fullWidth
+                    value={form.phone}
+                    onChange={handleChange}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    name="country"
+                    label="Country"
+                    fullWidth
+                    required
+                    value={form.country}
+                    onChange={handleChange}
+                  />
+                </Grid>
+              </Grid>
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                sx={{ mt: 3, mb: 2 }}
+              >
+                Register
+              </Button>
+            </Box>
+          </Box>
+        </Paper>
+      </Container>
+    </Box>
   );
 };
 
