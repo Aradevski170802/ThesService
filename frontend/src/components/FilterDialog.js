@@ -26,9 +26,9 @@ import { AuthContext } from '../context/AuthContext';
 
 // Possible statuses
 const STATUSES = [
-  { value: 'Registered', label: 'Registered' },
-  { value: 'Seen',       label: 'Seen' },
-  { value: 'Completed',  label: 'In Progress' },
+  { value: 'Pending', label: 'Pending' },
+  { value: 'In Progress', label: 'In Progress' },
+  { value: 'Finished', label: 'Finished' },
 ];
 
 // Possible categories
@@ -53,12 +53,12 @@ export default function FilterDialog({
   const { user } = useContext(AuthContext);
 
   // My Requests toggles
-  const [showPublished,   setShowPublished]   = useState(false);
+  const [showPublished, setShowPublished] = useState(false);
   const [showUnderReview, setShowUnderReview] = useState(false);
- 
+
 
   // Status & category selections
-  const [selectedStatus,   setSelectedStatus]   = useState([]);
+  const [selectedStatus, setSelectedStatus] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState([]);
 
   // Utility to disable + tooltip when not logged in
@@ -81,7 +81,7 @@ export default function FilterDialog({
   const handleClear = () => {
     setShowPublished(false);
     setShowUnderReview(false);
-    
+
     setSelectedStatus([]);
     setSelectedCategory([]);
   };
@@ -90,7 +90,7 @@ export default function FilterDialog({
     onApply({
       showPublished,
       showUnderReview,
-     
+
       statuses: selectedStatus,
       categories: selectedCategory
     });
@@ -137,7 +137,7 @@ export default function FilterDialog({
                   }
                   label="Show my requests under review"
                 />
-               
+
               </>
             )
             : (

@@ -1,6 +1,6 @@
 // src/components/ReportList.js
 
-import React, { useEffect, useState, useContext, useMemo } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
 import {
   Box,
@@ -26,7 +26,8 @@ import Map from './Map';
 import FilterDialog from './FilterDialog';
 
 const BASE = 'http://localhost:5000';
-const STEPS = ['Registered', 'Seen', 'Completed'];
+// Updated to match backend status enum
+const STEPS = ['Pending', 'In Progress', 'Finished'];
 
 function getSimpleAddress(full) {
   if (!full) return '';
@@ -35,24 +36,23 @@ function getSimpleAddress(full) {
 }
 
 export default function ReportList() {
-  const theme    = useTheme();
+  const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { user } = useContext(AuthContext);
 
-  const [reports, setReports]               = useState([]);
+  const [reports, setReports] = useState([]);
   const [filteredReports, setFilteredReports] = useState([]);
-  const [filterOpen, setFilterOpen]         = useState(false);
-  const [activeFilters, setActiveFilters]   = useState({
-    showPublished:   false,
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState({
+    showPublished: false,
     showUnderReview: false,
-    showSupported:   false,
-    statuses:        [],
-    categories:      []
+    statuses: [],
+    categories: []
   });
 
-  const [detailOpen, setDetailOpen]         = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
-  const [view, setView]                     = useState('list'); // for mobile
+  const [view, setView] = useState('list');
 
   // Fetch all reports on mount
   useEffect(() => {
@@ -64,15 +64,14 @@ export default function ReportList() {
   // Recompute filteredReports whenever reports or activeFilters change
   useEffect(() => {
     let arr = [...reports];
-
     const { statuses, categories } = activeFilters;
+
     if (statuses.length) {
       arr = arr.filter(r => statuses.includes(r.status));
     }
     if (categories.length) {
       arr = arr.filter(r => categories.includes(r.category));
     }
-    // (Optionally add "My Requests" filtering here)
 
     setFilteredReports(arr);
   }, [reports, activeFilters]);
@@ -100,9 +99,9 @@ export default function ReportList() {
   const HeaderBar = (
     <Box
       sx={{
-        px:2, py:1,
-        bgcolor:'#1e5870', color:'#fff',
-        display:'flex', justifyContent:'space-between', alignItems:'center'
+        px: 2, py: 1,
+        bgcolor: '#1e5870', color: '#fff',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center'
       }}
     >
       <Typography variant="subtitle1">
@@ -112,10 +111,10 @@ export default function ReportList() {
         variant="outlined"
         startIcon={<FilterListIcon />}
         sx={{
-          borderColor:'#fff', color:'#fff',
-          '&:hover':{ backgroundColor:'rgba(255,255,255,0.1)', borderColor:'#fff' }
+          borderColor: '#fff', color: '#fff',
+          '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)', borderColor: '#fff' }
         }}
-        onClick={()=>setFilterOpen(true)}
+        onClick={() => setFilterOpen(true)}
       >
         Filters
       </Button>
@@ -124,17 +123,17 @@ export default function ReportList() {
 
   // Card list
   const CardList = (
-    <Box sx={{ p:2 }}>
+    <Box sx={{ p: 2 }}>
       {filteredReports.map(r => {
-        const thumbUrl  = r.photos?.[0] ? `${BASE}/api/reports/photo/${r.photos[0]}` : null;
+        const thumbUrl = r.photos?.[0] ? `${BASE}/api/reports/photo/${r.photos[0]}` : null;
         const stepIndex = Math.max(0, STEPS.indexOf(r.status));
-        const addr      = getSimpleAddress(r.address);
+        const addr = getSimpleAddress(r.address);
 
         return (
           <Card
             key={r._id}
-            onClick={()=>openDetail(r._id)}
-            sx={{ mb:2, cursor:'pointer' }}
+            onClick={() => openDetail(r._id)}
+            sx={{ mb: 2, cursor: 'pointer' }}
           >
             <CardContent>
               <Stepper activeStep={stepIndex} alternativeLabel>
@@ -142,16 +141,16 @@ export default function ReportList() {
                   <Step key={s}><StepLabel>{s}</StepLabel></Step>
                 ))}
               </Stepper>
-              <Box sx={{ display:'flex', mt:1 }}>
+              <Box sx={{ display: 'flex', mt: 1 }}>
                 {thumbUrl && (
                   <CardMedia
                     component="img"
                     image={thumbUrl}
                     alt="Report"
-                    sx={{ width:100, borderRadius:1, mr:2 }}
+                    sx={{ width: 100, borderRadius: 1, mr: 2 }}
                   />
                 )}
-                <Box sx={{ flex:1 }}>
+                <Box sx={{ flex: 1 }}>
                   <Typography variant="body2" color="textSecondary" align="right">
                     #{r._id}
                   </Typography>
@@ -159,9 +158,13 @@ export default function ReportList() {
                   <Typography variant="subtitle2" gutterBottom>
                     {r.category}
                   </Typography>
+                  {/* Display current status */}
+                  <Typography variant="body2" color="textSecondary" paragraph>
+                    Status: {r.status}
+                  </Typography>
                   <Typography variant="body2" color="textSecondary" paragraph>
                     {r.description.length > 60
-                      ? r.description.slice(0,60) + '…'
+                      ? r.description.slice(0, 60) + '…'
                       : r.description}
                   </Typography>
                   {addr && (
@@ -185,46 +188,46 @@ export default function ReportList() {
   // Mobile layout
   if (isMobile) {
     return (
-      <Box sx={{ height:'100vh', display:'flex', flexDirection:'column' }}>
+      <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
         <FilterDialog
           open={filterOpen}
-          onClose={()=>setFilterOpen(false)}
+          onClose={() => setFilterOpen(false)}
           onApply={handleApplyFilters}
           filteredCount={filteredReports.length}
         />
 
         {HeaderBar}
 
-        <Box sx={{ display:'flex', borderBottom:1, borderColor:'divider' }}>
+        <Box sx={{ display: 'flex', borderBottom: 1, borderColor: 'divider' }}>
           <Button
             fullWidth
-            variant={view==='list'?'contained':'text'}
-            onClick={()=>setView('list')}
+            variant={view === 'list' ? 'contained' : 'text'}
+            onClick={() => setView('list')}
           >
             List
           </Button>
           <Button
             fullWidth
-            variant={view==='map'?'contained':'text'}
-            onClick={()=>setView('map')}
+            variant={view === 'map' ? 'contained' : 'text'}
+            onClick={() => setView('map')}
           >
             Map
           </Button>
         </Box>
         <Box sx={{
-          flex:1,
-          overflowY:'auto',
-          '&::-webkit-scrollbar':{ display:'none' },
-          scrollbarWidth:'none',
-          msOverflowStyle:'none'
+          flex: 1,
+          overflowY: 'auto',
+          '&::-webkit-scrollbar': { display: 'none' },
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
         }}>
-          {view==='list' ? CardList : MapPane}
+          {view === 'list' ? CardList : MapPane}
         </Box>
 
         <Dialog open={detailOpen} onClose={closeDetail} maxWidth="md" fullWidth>
           <DialogTitle>
             Report Details
-            <IconButton onClick={closeDetail} sx={{ position:'absolute', right:8, top:8 }}>
+            <IconButton onClick={closeDetail} sx={{ position: 'absolute', right: 8, top: 8 }}>
               <CloseIcon />
             </IconButton>
           </DialogTitle>
@@ -240,6 +243,10 @@ export default function ReportList() {
                 <Typography variant="subtitle1" gutterBottom>
                   {selectedReport.category}
                 </Typography>
+                {/* Display status in detail view */}
+                <Typography variant="body2" gutterBottom>
+                  Status: {selectedReport.status}
+                </Typography>
                 <Typography variant="body1" paragraph>
                   {selectedReport.description}
                 </Typography>
@@ -249,13 +256,13 @@ export default function ReportList() {
                   </Typography>
                 )}
                 {selectedReport.photos?.length > 0 && (
-                  <Box sx={{ display:'flex', flexWrap:'wrap', gap:1 }}>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                     {selectedReport.photos.map(pid => (
                       <img
                         key={pid}
                         src={`${BASE}/api/reports/photo/${pid}`}
                         alt="Report"
-                        style={{ width:100, borderRadius:4 }}
+                        style={{ width: 100, borderRadius: 4 }}
                       />
                     ))}
                   </Box>
@@ -270,35 +277,35 @@ export default function ReportList() {
 
   // Desktop layout
   return (
-    <Box sx={{ display:'flex', height:'100vh' }}>
+    <Box sx={{ display: 'flex', height: '100vh' }}>
       <FilterDialog
         open={filterOpen}
-        onClose={()=>setFilterOpen(false)}
+        onClose={() => setFilterOpen(false)}
         onApply={handleApplyFilters}
         filteredCount={filteredReports.length}
       />
 
-      <Box sx={{ width:'40%', display:'flex', flexDirection:'column' }}>
+      <Box sx={{ width: '40%', display: 'flex', flexDirection: 'column' }}>
         {HeaderBar}
         <Box sx={{
-          flex:1,
-          overflowY:'auto',
-          '&::-webkit-scrollbar':{ display:'none' },
-          scrollbarWidth:'none',
-          msOverflowStyle:'none'
+          flex: 1,
+          overflowY: 'auto',
+          '&::-webkit-scrollbar': { display: 'none' },
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
         }}>
           {CardList}
         </Box>
       </Box>
 
-      <Box sx={{ width:'60%', height:'100%' }}>
+      <Box sx={{ width: '60%', height: '100%' }}>
         {MapPane}
       </Box>
 
       <Dialog open={detailOpen} onClose={closeDetail} maxWidth="md" fullWidth>
         <DialogTitle>
           Report Details
-          <IconButton onClick={closeDetail} sx={{ position:'absolute', right:8, top:8 }}>
+          <IconButton onClick={closeDetail} sx={{ position: 'absolute', right: 8, top: 8 }}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>
@@ -314,6 +321,10 @@ export default function ReportList() {
               <Typography variant="subtitle1" gutterBottom>
                 {selectedReport.category}
               </Typography>
+              {/* Display status in detail view */}
+              <Typography variant="body2" gutterBottom>
+                Status: {selectedReport.status}
+              </Typography>
               <Typography variant="body1" paragraph>
                 {selectedReport.description}
               </Typography>
@@ -323,13 +334,13 @@ export default function ReportList() {
                 </Typography>
               )}
               {selectedReport.photos?.length > 0 && (
-                <Box sx={{ display:'flex', flexWrap:'wrap', gap:1 }}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                   {selectedReport.photos.map(pid => (
                     <img
                       key={pid}
                       src={`${BASE}/api/reports/photo/${pid}`}
                       alt="Report"
-                      style={{ width:100, borderRadius:4 }}
+                      style={{ width: 100, borderRadius: 4 }}
                     />
                   ))}
                 </Box>
