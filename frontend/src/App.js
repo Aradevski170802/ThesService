@@ -13,6 +13,9 @@ import AdminPage from './pages/AdminPage';
 import HomePage from './pages/Home';
 import { AuthProvider } from './context/AuthContext';
 import './App.css';
+import AboutUsPage from './pages/AboutUsPage';
+import ContactPage from './pages/ContactPage';
+import FAQPage     from './pages/FAQPage';
 
 const App = () => {
   return (
@@ -26,6 +29,9 @@ const App = () => {
           <Route path="/verify-email" element={<VerifyPage />} />
           <Route path="/change-password" element={<ChangePasswordPage />} />
           <Route path="/change-email" element={<ChangeEmailPage />} />
+          <Route path="/about"   element={<AboutUsPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/faq"     element={<FAQPage />} />
 
           {/* Protected user routes */}
           <Route path="/reports" element={<ReportList />} />

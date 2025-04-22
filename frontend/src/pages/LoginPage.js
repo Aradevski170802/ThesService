@@ -81,7 +81,7 @@ const LoginPage = () => {
               </Button>
               <Grid container>
                 <Grid item xs>
-                  <Link component={RouterLink} to="#" variant="body2">
+                  <Link component={RouterLink} to="/change-password" variant="body2">
                     Forgot password?
                   </Link>
                 </Grid>

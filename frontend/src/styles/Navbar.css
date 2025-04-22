@@ -1,35 +1,26 @@
-/* NAVBAR.CSS */
-
 /* ========== GLOBAL RESETS / UTILS ========== */
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
+body, html { margin: 0; padding: 0; }
 
-body,
-html {
-  margin: 0;
-  padding: 0;
-}
-
-/* Desktop Navbar (hidden on mobile) */
+/* ========== DESKTOP NAVBAR ========== */
 .desktop-navbar {
   display: block;
   background: linear-gradient(90deg, #ff416c, #ff4b2b);
   color: #fff;
   padding: 0.5rem 1rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
   position: relative;
+  z-index: 1000;
 }
 
-/* Navbar container */
+/* Flex container: brand + links, no wrapping */
 .navbar-container {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
+  flex-wrap: nowrap;
 }
 
+/* Brand on the left */
 .navbar-title a {
   color: #fff;
   font-size: 1.4rem;
@@ -39,55 +30,49 @@ html {
   transition: color 0.3s;
 }
 
+/* Hover on brand */
 .navbar-title a:hover {
   color: #ffece9;
 }
 
-/* Desktop Nav Links */
+/* Nav links container pushed to the right */
 .navbar-links {
   display: flex;
   align-items: center;
+  margin-left: auto;      /* ← pushes links to the right */
+  gap: 1.25rem;           /* consistent spacing between items */
+  white-space: nowrap;    /* never wrap to the next line */
 }
 
-.navbar-links a,
-.nav-link {
-  margin-left: 1.25rem;
+/* All top‑level links & dropdown‑toggle get this style */
+.navbar-links .nav-link,
+.navbar-links .dropdown-toggle {
   color: #fff;
   text-decoration: none;
   font-weight: 500;
-  transition: color 0.3s;
   font-size: 1rem;
-}
-
-.navbar-links a:hover,
-.nav-link:hover {
-  color: #ffece9;
-}
-
-/* Dropdown styling (DESKTOP ONLY) */
-.dropdown {
-  position: relative;
-  margin-left: 1.25rem;
-}
-
-.dropdown-toggle {
   background: none;
   border: none;
-  color: #fff;
-  font-size: 1rem;
   cursor: pointer;
   transition: color 0.3s;
-  font-weight: 500;
 }
 
-.dropdown-toggle:hover {
+/* Hover on any nav‑link or dropdown toggle */
+.navbar-links .nav-link:hover,
+.navbar-links .dropdown-toggle:hover {
   color: #ffece9;
+}
+
+/* ========== DROPDOWN MENU ========== */
+.dropdown {
+  position: relative;
 }
 
 .dropdown-menu {
   position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
+  top: calc(100% + 0.5rem);  /* 0.5rem = 8px gap below the toggle */
+  right: 0;                  /* anchor the menu’s right edge to the toggle’s right edge */
+  left: auto;                /* cancel the old left:0 */
   background: #fff;
   color: #333;
   padding: 0.5rem 0;
@@ -100,8 +85,9 @@ html {
 .dropdown-menu::before {
   content: "";
   position: absolute;
-  top: -8px;
-  left: 20px;
+  top: -0.5rem;             /* arrow 8px above menu */
+  right: 1rem;              /* shift the arrow so it still points at “My Profile” */
+  left: auto;
   border-left: 8px solid transparent;
   border-right: 8px solid transparent;
   border-bottom: 8px solid #fff;
@@ -111,7 +97,7 @@ html {
   display: block;
   width: 100%;
   padding: 0.5rem 1rem;
-  color: #333;
+  color: #121111;
   text-decoration: none;
   font-size: 0.95rem;
   font-weight: 500;
@@ -126,38 +112,24 @@ html {
   background: #f7f7f7;
 }
 
-.dropdown-item button {
-  background: transparent;
-  border: none;
-  color: inherit;
-  width: 100%;
-  text-align: left;
-}
-
-/* Fade/Scale for the dropdown */
+/* subtle “pop” animation */
 .fade-in-scale {
   animation: fadeInScale 0.25s forwards ease-out;
 }
-
 @keyframes fadeInScale {
-  0% {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
+  0% { opacity: 0; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
 /* ========== MOBILE MENU ========== */
-/* The bottom "Menu" button (hidden on desktop) */
+/* … keep your existing mobile styles below unchanged … */
+
+
+/* ========== MOBILE MENU ========== */
 .mobile-nav-button {
   display: none;
 }
 
-/* The full-screen overlay that slides up from bottom */
 .mobile-menu-overlay {
   position: fixed;
   left: 0;
@@ -178,13 +150,11 @@ html {
   0% {
     transform: translateY(100%);
   }
-
   100% {
     transform: translateY(0%);
   }
 }
 
-/* The links in the overlay, centered vertically */
 .mobile-menu-links {
   list-style: none;
   padding: 0;
@@ -216,7 +186,6 @@ html {
   color: #ff4b2b;
 }
 
-/* Close button at bottom center */
 .mobile-menu-close {
   position: absolute;
   bottom: 2rem;
@@ -242,12 +211,12 @@ html {
 /* ========== MEDIA QUERIES ========== */
 @media (max-width: 768px) {
 
-  /* Hide the desktop navbar on mobile */
+  /* Hide desktop */
   .desktop-navbar {
     display: none;
   }
 
-  /* Show the bottom "Menu" button */
+  /* Show mobile menu button */
   .mobile-nav-button {
     display: block;
     position: fixed;
