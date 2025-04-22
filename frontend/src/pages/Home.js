@@ -10,7 +10,7 @@ const Home = () => {
           <div className="hero-content">
             <h1 className="hero-title">Public Infrastructure Maintenance</h1>
             <p className="hero-subtitle">Empowering you to help improve your city.</p>
-            <Link to="/reports">
+            <Link to="/submit-report">
               <button className="hero-btn">Report an Issue</button>
             </Link>
           </div>
@@ -62,8 +62,8 @@ const Home = () => {
       <footer className="home-footer">
         <p>&copy; {new Date().getFullYear()} Public Infrastructure Maintenance. All rights reserved.</p>
         <div className="footer-links">
-          <Link to="/about">About Us</Link>
-          <Link to="/contact">Contact</Link>
+          {/* <Link to="/about">About Us</Link>
+          <Link to="/contact">Contact</Link> */}
           <Link to="/faq">FAQ</Link>
         </div>
       </footer>
